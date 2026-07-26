@@ -252,6 +252,9 @@ void MountPage::on_mount_clicked()
         window_.credential_store().store(cred);
 
         password_entry_.set_text("");
+
+        // Switch to Mounted tab to show the new mount
+        window_.switch_to_tab("mounted-page");
       } else {
         window_.set_status("Mount failed: " + result.error_message);
       }
