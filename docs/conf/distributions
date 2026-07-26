@@ -1,0 +1,8 @@
+Origin: Mounter Project
+Label: Mounter
+Suite: stable
+Codename: stable
+Architectures: amd64
+Components: main
+Description: APT repository for Mounter — SMB/CIFS mount GUI for Linux
+SignWith: default

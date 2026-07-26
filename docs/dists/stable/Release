@@ -1,0 +1,14 @@
+Origin: Mounter Project
+Label: Mounter
+Suite: stable
+Codename: stable
+Architectures: amd64
+Components: main
+Description: APT repository for Mounter — SMB/CIFS mount GUI for Linux
+Date: Sun, 26 Jul 2026 13:51:43 +0000
+MD5Sum:
+ a0fa59e4c3a315158d49016dba2445cf 890 main/binary-amd64/Packages.gz
+ aacaf7118243d259aa505439b08b6300 1513 main/binary-amd64/Packages
+SHA256:
+ 33d7d1929fe84e18a53750ec28f8bc76fdc247dff79b92015109c9c83232866f 890 main/binary-amd64/Packages.gz
+ c1f95496ddf26ba0339c1c15b87047c601eda527873939fabe0b46363a49a5a3 1513 main/binary-amd64/Packages
