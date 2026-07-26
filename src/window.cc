@@ -196,7 +196,10 @@ void Window::show_about_dialog()
   about->set_logo_icon_name("com.github.oddsoul.Mounter");
 
   // Self-delete when closed
-  about->signal_response().connect([about](int) { delete about; });
+  about->signal_close_request().connect([about]() -> bool {
+    delete about;
+    return false;
+  }, false);
 
   about->set_visible(true);
   about->present();
