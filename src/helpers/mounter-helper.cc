@@ -60,10 +60,42 @@ std::string json_get_string(const std::string& json, const std::string& key)
   return json.substr(pos, end - pos);
 }
 
-// ── Run a command and return exit code ──────────────────────
-int run_command(const std::string& cmd)
+// ── Run a command and capture output ─────────────────────────
+
+struct CommandResult {
+  int exit_code = 0;
+  std::string output;
+};
+
+static CommandResult run_command_capture(const std::string& cmd)
 {
-  return std::system(cmd.c_str());
+  CommandResult result;
+  // Redirect stderr to stdout so we capture error messages
+  std::string full_cmd = cmd + " 2>&1";
+
+  FILE* pipe = popen(full_cmd.c_str(), "r");
+  if (!pipe) {
+    result.exit_code = -1;
+    result.output = "Failed to execute command";
+    return result;
+  }
+
+  char buffer[256];
+  while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+    result.output += buffer;
+  }
+
+  int status = pclose(pipe);
+  if (WIFEXITED(status)) {
+    result.exit_code = WEXITSTATUS(status);
+  } else if (WIFSIGNALED(status)) {
+    result.exit_code = -1;
+    result.output += " [killed by signal " + std::to_string(WTERMSIG(status)) + "]";
+  } else {
+    result.exit_code = status;
+  }
+
+  return result;
 }
 
 // ── Write a file as root (already privileged) ────────────────
@@ -80,11 +112,8 @@ bool write_file(const std::string& path, const std::string& content,
 
 bool ensure_directory(const std::string& path, mode_t /*mode*/ = 0755)
 {
-  // Simple recursive mkdir. The mode parameter is not used directly
-  // because we delegate to the mkdir command which handles permissions
-  // via the system umask.
   std::string cmd = "mkdir -p \"" + path + "\"";
-  return run_command(cmd) == 0;
+  return run_command_capture(cmd).exit_code == 0;
 }
 
 // ── Command handlers ────────────────────────────────────────
@@ -135,16 +164,26 @@ int cmd_mount(const std::string& json)
 
   // Default to current user's uid/gid for local access
   cmd << ",uid=" << getuid() << ",gid=" << getgid();
-  cmd << ",iocharset=utf8";
 
-  int ret = run_command(cmd.str());
-  if (ret == 0) {
+  auto result = run_command_capture(cmd.str());
+  if (result.exit_code == 0) {
     std::cout << R"JSON({"success":true})JSON" << std::endl;
     return 0;
   } else {
-    std::cout << R"JSON({"success":false,"error":"mount.cifs failed with exit code )JSON"
-              << ret << R"JSON("})JSON" << std::endl;
-    return ret;
+    // Escape special characters in error message for JSON
+    std::string escaped_error = result.output;
+    // Collapse newlines to spaces for cleaner display
+    for (auto& c : escaped_error) {
+      if (c == '\n' || c == '\r') c = ' ';
+      if (c == '"') c = '\'';
+    }
+
+    std::cout << R"JSON({"success":false,"error":")JSON"
+              << escaped_error
+              << " (exit " << result.exit_code << ")"
+              << R"JSON("})JSON"
+              << std::endl;
+    return result.exit_code;
   }
 }
 
@@ -158,20 +197,21 @@ int cmd_umount(const std::string& json)
 
   // Try normal unmount first
   std::string cmd = "umount \"" + mountpoint + "\"";
-  int ret = run_command(cmd);
+  auto result = run_command_capture(cmd);
 
-  if (ret != 0) {
+  if (result.exit_code != 0) {
     // Try lazy unmount as fallback (for stale mounts after suspend)
     cmd = "umount -l \"" + mountpoint + "\"";
-    ret = run_command(cmd);
+    result = run_command_capture(cmd);
   }
 
-  if (ret == 0) {
+  if (result.exit_code == 0) {
     std::cout << R"JSON({"success":true})JSON" << std::endl;
     return 0;
   } else {
-    std::cout << R"JSON({"success":false,"error":"umount failed"})JSON" << std::endl;
-    return ret;
+    std::cout << R"JSON({"success":false,"error":"umount failed: )JSON"
+              << result.output << R"JSON("})JSON" << std::endl;
+    return result.exit_code;
   }
 }
 
