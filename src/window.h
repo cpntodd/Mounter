@@ -37,6 +37,7 @@ public:
 
   // Expose pages for cross-tab coordination
   MountPage&        mount_page()        { return *mount_page_; }
+  ProfilesPage&     profiles_page()     { return *profiles_page_; }
 
   // Tab navigation
   void switch_to_tab(const std::string& name);

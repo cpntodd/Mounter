@@ -6,6 +6,7 @@
 #include "../core/mount_operation.h"
 #include "../core/credential_store.h"
 #include "../core/mount_monitor.h"
+#include "profiles_page.h"
 
 namespace Mounter {
 
@@ -257,6 +258,9 @@ void MountPage::on_mount_clicked()
         cred.password = params.password;
         cred.domain   = params.domain;
         window_.credential_store().store(cred);
+
+        // Auto-create a profile for this mount
+        window_.profiles_page().add_from_mount(params);
 
         password_entry_.set_text("");
 
