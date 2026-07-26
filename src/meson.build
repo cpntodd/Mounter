@@ -4,6 +4,7 @@ mounter_sources = files(
   'application.cc',
   'window.cc',
   'pages/discovery_page.cc',
+  'pages/dashboard_page.cc',
   'pages/mount_page.cc',
   'pages/mounted_page.cc',
   'pages/profiles_page.cc',
@@ -14,6 +15,7 @@ mounter_sources = files(
   'core/discovery_engine.cc',
   'core/systemd_manager.cc',
   'ui/style_manager.cc',
+  'ui/pie_chart.cc',
 )
 
 mounter_deps = [

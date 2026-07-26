@@ -7,6 +7,7 @@
 #include "core/mount_operation.h"
 #include "core/credential_store.h"
 #include "pages/discovery_page.h"
+#include "pages/dashboard_page.h"
 #include "pages/mount_page.h"
 #include "pages/mounted_page.h"
 #include "pages/profiles_page.h"
@@ -32,15 +33,15 @@ Window::Window(Application& app)
   // Start monitoring mounts
   mount_monitor_->start(2000);
 
-  // Default to the manual mount page
-  stack_.set_visible_child("mount-page");
+  // Default to the dashboard
+  stack_.set_visible_child("dashboard-page");
 }
 
 Window::~Window() = default;
 
 void Window::setup_shortcuts()
 {
-  // Tab switching with Ctrl+1 through Ctrl+5
+  // Tab switching with Ctrl+1 through Ctrl+6
   auto add_tab_shortcut = [this](int index, const char* page_name) {
     auto action = Gio::SimpleAction::create(
       "switch-tab-" + std::to_string(index));
@@ -53,11 +54,12 @@ void Window::setup_shortcuts()
       "<Control>" + std::to_string(index));
   };
 
-  add_tab_shortcut(1, "discover-page");
-  add_tab_shortcut(2, "mount-page");
-  add_tab_shortcut(3, "mounted-page");
-  add_tab_shortcut(4, "profiles-page");
-  add_tab_shortcut(5, "diagnostics-page");
+  add_tab_shortcut(1, "dashboard-page");
+  add_tab_shortcut(2, "discover-page");
+  add_tab_shortcut(3, "mount-page");
+  add_tab_shortcut(4, "mounted-page");
+  add_tab_shortcut(5, "profiles-page");
+  add_tab_shortcut(6, "diagnostics-page");
 
   // Ctrl+R: refresh / rescan
   auto refresh_action = Gio::SimpleAction::create("refresh");
@@ -90,6 +92,7 @@ void Window::setup_shortcuts()
 void Window::build_ui()
 {
   // ── Create pages (pass core services where needed) ────────
+  dashboard_page_   = std::make_unique<DashboardPage>(*this);
   discovery_page_   = std::make_unique<DiscoveryPage>(*this);
   mount_page_       = std::make_unique<MountPage>(*this);
   mounted_page_     = std::make_unique<MountedPage>(*this);
@@ -97,6 +100,7 @@ void Window::build_ui()
   diagnostics_page_ = std::make_unique<DiagnosticsPage>(*this);
 
   // ── Stack ─────────────────────────────────────────────────
+  stack_.add(*dashboard_page_,   "dashboard-page",  "Dashboard");
   stack_.add(*discovery_page_,   "discover-page",   "Discover");
   stack_.add(*mount_page_,       "mount-page",      _("Manual Mount"));
   stack_.add(*mounted_page_,     "mounted-page",    "Mounted");

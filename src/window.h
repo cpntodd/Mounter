@@ -8,6 +8,7 @@
 namespace Mounter {
 
 class Application;
+class DashboardPage;
 class DiscoveryPage;
 class MountPage;
 class MountedPage;
@@ -54,6 +55,7 @@ private:
   std::unique_ptr<CredentialStore>  credential_store_;
 
   // Pages
+  std::unique_ptr<DashboardPage>    dashboard_page_;
   std::unique_ptr<DiscoveryPage>    discovery_page_;
   std::unique_ptr<MountPage>        mount_page_;
   std::unique_ptr<MountedPage>      mounted_page_;
