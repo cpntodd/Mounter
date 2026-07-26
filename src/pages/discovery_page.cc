@@ -177,7 +177,32 @@ void DiscoveryPage::on_results(const std::vector<DiscoveredHost>& hosts)
       share_row->set_margin_end(8);
       share_row->set_margin_top(2);
       share_row->set_margin_bottom(2);
+      if (share.auth_required) {
+        // Auth-required placeholder — show a lock icon and prompt
+        auto lock_icon = Gtk::make_managed<Gtk::Label>("\360\237\224\222"); // 🔒
+        lock_icon->set_width_chars(2);
 
+        auto auth_label = Gtk::make_managed<Gtk::Label>(
+          _("Authentication required — click to enter credentials"));
+        auth_label->set_halign(Gtk::Align::START);
+        auth_label->set_hexpand(true);
+        auth_label->set_opacity(0.8);
+
+        auto cred_btn = Gtk::make_managed<Gtk::Button>(_("Enter Credentials"));
+        cred_btn->get_style_context()->add_class("suggested-action");
+        auto server = host.ip_address;
+        cred_btn->signal_clicked().connect([this, server]() {
+          // Switch to manual mount tab with server pre-filled
+          window_.set_status(
+            "Switch to Manual Mount tab and enter credentials for " + server);
+        });
+
+        share_row->append(*lock_icon);
+        share_row->append(*auth_label);
+        share_row->append(*cred_btn);
+        results_list_.append(*share_row);
+        continue;
+      }
       auto folder_icon = Gtk::make_managed<Gtk::Label>("\360\237\223\201"); // 📁
       folder_icon->set_width_chars(2);
 

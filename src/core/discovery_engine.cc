@@ -185,57 +185,125 @@ std::vector<DiscoveredShare> DiscoveryEngine::list_shares(const std::string& hos
   std::vector<DiscoveredShare> shares;
 
   try {
-    // First try guest access: smbclient -L //host -N -g
+    // Try guest access: smbclient -L //host -N -g
     auto proc = Gio::Subprocess::create(
       std::vector<std::string>{"smbclient", "-L", "//" + host, "-N", "-g"},
-      Gio::Subprocess::Flags::STDOUT_PIPE | Gio::Subprocess::Flags::STDERR_SILENCE);
+      Gio::Subprocess::Flags::STDOUT_PIPE | Gio::Subprocess::Flags::STDERR_PIPE);
 
     auto [stdout_bytes, stderr_bytes] = proc->communicate(nullptr, nullptr);
 
+    std::string output;
     if (stdout_bytes) {
       gsize size;
       const auto* data = static_cast<const char*>(stdout_bytes->get_data(size));
-      std::string output(data, size);
+      output.assign(data, size);
+    }
 
-      // Parse grepable smbclient output:
-      // Lines like: Disk|share_name|Comment
-      // Skip lines starting with "Anonymous login successful" etc.
-      std::istringstream iss(output);
-      std::string line;
-      while (std::getline(iss, line)) {
-        // smbclient -g format: type|name|comment
-        auto first_pipe = line.find('|');
-        if (first_pipe == std::string::npos) continue;
+    int exit_code = proc->get_exit_status();
 
-        auto type = line.substr(0, first_pipe);
-        if (type != "Disk") continue; // Only care about file shares
+    // Check if authentication is required
+    bool access_denied = (exit_code != 0) ||
+      (output.find("NT_STATUS_ACCESS_DENIED") != std::string::npos) ||
+      (output.find("NT_STATUS_LOGON_FAILURE") != std::string::npos);
 
-        auto rest = line.substr(first_pipe + 1);
-        auto second_pipe = rest.find('|');
+    if (access_denied && output.find("Disk|") == std::string::npos) {
+      // Server requires authentication — create a placeholder entry
+      DiscoveredShare share;
+      share.name          = "[Authentication Required]";
+      share.comment       = "Enter credentials to browse shares";
+      share.guest_ok      = false;
+      share.auth_required = true;
+      shares.push_back(std::move(share));
+      return shares;
+    }
 
-        std::string share_name = (second_pipe != std::string::npos)
-          ? rest.substr(0, second_pipe)
-          : rest;
+    // Parse grepable smbclient output:
+    // Lines like: Disk|share_name|Comment
+    std::istringstream iss(output);
+    std::string line;
+    while (std::getline(iss, line)) {
+      auto first_pipe = line.find('|');
+      if (first_pipe == std::string::npos) continue;
 
-        // Skip system shares
-        if (share_name.empty() || share_name == "IPC$" ||
-            share_name.find('$') == share_name.size() - 1) continue;
+      auto type = line.substr(0, first_pipe);
+      if (type != "Disk") continue;
 
-        std::string comment = (second_pipe != std::string::npos)
-          ? rest.substr(second_pipe + 1)
-          : "";
+      auto rest = line.substr(first_pipe + 1);
+      auto second_pipe = rest.find('|');
 
-        DiscoveredShare share;
-        share.name      = share_name;
-        share.comment   = comment;
-        share.guest_ok  = true;
-        share.auth_required = false;
-        shares.push_back(std::move(share));
+      std::string share_name = (second_pipe != std::string::npos)
+        ? rest.substr(0, second_pipe)
+        : rest;
+
+      // Skip system/IPC shares (ending with $)
+      if (share_name.empty() || share_name == "IPC$" ||
+          (!share_name.empty() && share_name.back() == '$')) continue;
+
+      std::string comment = (second_pipe != std::string::npos)
+        ? rest.substr(second_pipe + 1)
+        : "";
+
+      DiscoveredShare share;
+      share.name          = share_name;
+      share.comment       = comment;
+      share.guest_ok      = true;
+      share.auth_required = false;
+      shares.push_back(std::move(share));
+    }
+
+    // If -g produced no results, try parsing non-grepable (table) output
+    if (shares.empty() && !access_denied) {
+      // Try without -g flag for human-readable output
+      auto proc2 = Gio::Subprocess::create(
+        std::vector<std::string>{"smbclient", "-L", "//" + host, "-N"},
+        Gio::Subprocess::Flags::STDOUT_PIPE | Gio::Subprocess::Flags::STDERR_PIPE);
+
+      auto [out2, err2] = proc2->communicate(nullptr, nullptr);
+
+      if (out2) {
+        gsize size;
+        const auto* data = static_cast<const char*>(out2->get_data(size));
+        std::string table_output(data, size);
+
+        // Parse table format: lines with "Disk" followed by share name
+        // Example:   home               Disk      Home directories
+        std::istringstream iss2(table_output);
+        std::string line2;
+        bool in_share_list = false;
+        while (std::getline(iss2, line2)) {
+          // Detect start of share list (header line)
+          if (line2.find("Sharename") != std::string::npos) {
+            in_share_list = true;
+            continue;
+          }
+          if (line2.find("---") != std::string::npos && in_share_list) continue;
+
+          if (in_share_list && line2.find("Disk") != std::string::npos) {
+            // Extract share name: first word before whitespace+Disk
+            std::istringstream wordstream(line2);
+            std::string share_name;
+            wordstream >> share_name;
+
+            if (!share_name.empty() && share_name != "IPC$" && share_name.back() != '$') {
+              // Check if already added
+              bool exists = false;
+              for (const auto& s : shares) {
+                if (s.name == share_name) { exists = true; break; }
+              }
+              if (!exists) {
+                DiscoveredShare share;
+                share.name          = share_name;
+                share.comment       = "";
+                share.guest_ok      = true;
+                share.auth_required = false;
+                shares.push_back(std::move(share));
+              }
+            }
+          }
+        }
       }
     }
 
-    // If no shares found via guest, the share might require auth
-    // We mark them as auth_required so the UI can prompt
   } catch (...) {}
 
   return shares;
