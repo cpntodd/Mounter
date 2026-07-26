@@ -116,11 +116,18 @@ void DiscoveryPage::on_scan_clicked()
         window_.set_status("Scan complete — no hosts found.");
       } else {
         size_t total_shares = 0;
-        for (const auto& h : hosts) total_shares += h.shares.size();
+        size_t smb_hosts = 0;
+        for (const auto& h : hosts) {
+          if (h.is_smb_server) smb_hosts++;
+          total_shares += h.shares.size();
+        }
 
-        progress_label_.set_text(
-          "Found " + std::to_string(hosts.size()) + " host(s) with " +
-          std::to_string(total_shares) + " share(s).");
+        auto msg = "Found " + std::to_string(hosts.size()) + " host(s)";
+        if (smb_hosts > 0) {
+          msg += " (" + std::to_string(smb_hosts) + " SMB)";
+        }
+        msg += " with " + std::to_string(total_shares) + " share(s).";
+        progress_label_.set_text(msg);
         window_.set_status("Scan complete.");
 
         on_results(hosts);
@@ -148,7 +155,8 @@ void DiscoveryPage::on_results(const std::vector<DiscoveredHost>& hosts)
     header_row->set_margin_bottom(4);
 
     // Host icon + name
-    auto host_icon = Gtk::make_managed<Gtk::Label>("\360\237\226\245"); // 🖥
+    auto host_icon = Gtk::make_managed<Gtk::Label>(
+      host.is_smb_server ? "\360\237\226\245" : "\342\232\240"); // 🖥 or ⚠
     host_icon->set_width_chars(2);
 
     std::string host_label = host.ip_address;
@@ -161,14 +169,23 @@ void DiscoveryPage::on_results(const std::vector<DiscoveredHost>& hosts)
     host_name->get_style_context()->add_class("heading");
     host_name->set_hexpand(true);
 
-    auto share_count = Gtk::make_managed<Gtk::Label>(
-      std::to_string(host.shares.size()) + " share(s)");
-    share_count->set_opacity(0.6);
+    // Different badge based on SMB verification
+    std::string count_text;
+    if (host.is_smb_server) {
+      count_text = std::to_string(host.shares.size()) + " share(s)";
+    } else {
+      count_text = "Port 445 open, not SMB";
+    }
+    auto share_count = Gtk::make_managed<Gtk::Label>(count_text);
+    share_count->set_opacity(host.is_smb_server ? 0.6 : 0.4);
 
     header_row->append(*host_icon);
     header_row->append(*host_name);
     header_row->append(*share_count);
     results_list_.append(*header_row);
+
+    // For non-SMB hosts, skip share rows entirely
+    if (!host.is_smb_server) continue;
 
     // ── Share rows ──────────────────────────────────────────
     for (const auto& share : host.shares) {

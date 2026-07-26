@@ -19,6 +19,7 @@ struct DiscoveredHost {
   std::string ip_address;
   std::string hostname;
   bool        reachable = false;
+  bool        is_smb_server = false;  // confirmed SMB protocol response
   std::vector<struct DiscoveredShare> shares;
 };
 
@@ -59,8 +60,9 @@ private:
   /// Run nmap to find hosts with port 445 open.
   std::vector<std::string> scan_hosts(const std::string& subnet);
 
-  /// Run smbclient to list shares on a host.
-  std::vector<DiscoveredShare> list_shares(const std::string& host);
+  /// Run smbclient to list shares on a host. Sets out_is_smb to true if
+  /// the host responded to the SMB protocol handshake.
+  std::vector<DiscoveredShare> list_shares(const std::string& host, bool& out_is_smb);
 
   /// Resolve hostname from IP (reverse DNS lookup).
   static std::string resolve_hostname(const std::string& ip);

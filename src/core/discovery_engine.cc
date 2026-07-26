@@ -74,7 +74,8 @@ void DiscoveryEngine::scan_async(const std::string& subnet,
       host.ip_address = ip;
       host.hostname   = resolve_hostname(ip);
       host.reachable  = true;
-      host.shares     = list_shares(ip);
+      std::vector<DiscoveredShare> shares = list_shares(ip, host.is_smb_server);
+      host.shares     = std::move(shares);
       hosts.push_back(std::move(host));
     }
 
@@ -180,9 +181,11 @@ std::vector<std::string> DiscoveryEngine::scan_hosts(const std::string& subnet)
 
 // ── Share enumeration (smbclient) ───────────────────────────
 
-std::vector<DiscoveredShare> DiscoveryEngine::list_shares(const std::string& host)
+std::vector<DiscoveredShare> DiscoveryEngine::list_shares(const std::string& host,
+                                                       bool& out_is_smb)
 {
   std::vector<DiscoveredShare> shares;
+  out_is_smb = false;
 
   try {
     // Try guest access: smbclient -L //host -N -g
@@ -199,13 +202,14 @@ std::vector<DiscoveredShare> DiscoveryEngine::list_shares(const std::string& hos
       output.assign(data, size);
     }
 
-    int exit_code = proc->get_exit_status();
+    // Verify this is actually an SMB server: must have completed protocol handshake
+    out_is_smb = (output.find("Anonymous login successful") != std::string::npos) ||
+                 (output.find("Enter ") != std::string::npos);  // password prompt
 
-    // Only mark as auth-required if smbclient explicitly says ACCESS_DENIED.
-    // Other failures (timeout, connection refused, etc.) just mean no guest shares.
-    bool access_denied =
+    // Only detect auth issues on confirmed SMB servers
+    bool access_denied = out_is_smb && (
       (output.find("NT_STATUS_ACCESS_DENIED") != std::string::npos) ||
-      (output.find("NT_STATUS_LOGON_FAILURE") != std::string::npos);
+      (output.find("NT_STATUS_LOGON_FAILURE") != std::string::npos));
 
     if (access_denied && output.find("Disk|") == std::string::npos) {
       // Server requires authentication — create a placeholder entry
