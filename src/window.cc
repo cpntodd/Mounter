@@ -26,6 +26,7 @@ Window::Window(Application& app)
   credential_store_ = std::make_unique<CredentialStore>();
 
   build_ui();
+  setup_shortcuts();
 
   // Start monitoring mounts
   mount_monitor_->start(2000);
@@ -35,6 +36,55 @@ Window::Window(Application& app)
 }
 
 Window::~Window() = default;
+
+void Window::setup_shortcuts()
+{
+  // Tab switching with Ctrl+1 through Ctrl+5
+  auto add_tab_shortcut = [this](int index, const char* page_name) {
+    auto action = Gio::SimpleAction::create(
+      "switch-tab-" + std::to_string(index));
+    action->signal_activate().connect([this, page_name](const Glib::VariantBase&) {
+      stack_.set_visible_child(page_name);
+    });
+    app_.add_action(action);
+    app_.set_accel_for_action(
+      "app.switch-tab-" + std::to_string(index),
+      "<Control>" + std::to_string(index));
+  };
+
+  add_tab_shortcut(1, "discover-page");
+  add_tab_shortcut(2, "mount-page");
+  add_tab_shortcut(3, "mounted-page");
+  add_tab_shortcut(4, "profiles-page");
+  add_tab_shortcut(5, "diagnostics-page");
+
+  // Ctrl+R: refresh / rescan
+  auto refresh_action = Gio::SimpleAction::create("refresh");
+  refresh_action->signal_activate().connect([this](const Glib::VariantBase&) {
+    // Trigger scan if on discovery page
+    if (stack_.get_visible_child_name() == "discover-page") {
+      set_status("Press \"Scan Network\" to discover shares.");
+    }
+  });
+  app_.add_action(refresh_action);
+  app_.set_accel_for_action("app.refresh", "<Control>r");
+
+  // Ctrl+W: close window
+  auto close_action = Gio::SimpleAction::create("close-window");
+  close_action->signal_activate().connect([this](const Glib::VariantBase&) {
+    close();
+  });
+  app_.add_action(close_action);
+  app_.set_accel_for_action("app.close-window", "<Control>w");
+
+  // Escape: clear status
+  auto escape_action = Gio::SimpleAction::create("clear-status");
+  escape_action->signal_activate().connect([this](const Glib::VariantBase&) {
+    set_status("Ready");
+  });
+  app_.add_action(escape_action);
+  app_.set_accel_for_action("app.clear-status", "Escape");
+}
 
 void Window::build_ui()
 {

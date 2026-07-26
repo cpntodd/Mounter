@@ -27,6 +27,7 @@ public:
   Window& operator=(const Window&) = delete;
 
   void show_about_dialog();
+  void setup_shortcuts();
 
   // Expose core services to pages
   MountMonitor&     mount_monitor()     { return *mount_monitor_; }

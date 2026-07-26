@@ -54,6 +54,11 @@ void MountPage::build_ui()
     if (!share.empty() && mountpoint_entry_.get_text() == "/mnt/") {
       mountpoint_entry_.set_text("/mnt/" + share);
     }
+    try_fill_credentials();
+  });
+
+  server_entry_.signal_changed().connect([this]() {
+    try_fill_credentials();
   });
 
   auto vers_model = Gtk::StringList::create({
@@ -75,6 +80,30 @@ void MountPage::build_ui()
   attach_row(share_label_, share_entry_);
   attach_row(username_label_, username_entry_);
   attach_row(password_label_, password_entry_);
+
+  // Pressing Enter in any field triggers mount
+  auto enter_controller = Gtk::EventControllerKey::create();
+  enter_controller->signal_key_pressed().connect(
+    [this](guint keyval, guint, Gdk::ModifierType) -> bool {
+      if (keyval == GDK_KEY_Return || keyval == GDK_KEY_KP_Enter) {
+        on_mount_clicked();
+        return true;
+      }
+      return false;
+    }, false);
+  password_entry_.add_controller(enter_controller);
+  server_entry_.add_controller(Gtk::EventControllerKey::create());
+  // Share the same handler pattern for server_entry too
+  auto enter_controller2 = Gtk::EventControllerKey::create();
+  enter_controller2->signal_key_pressed().connect(
+    [this](guint keyval, guint, Gdk::ModifierType) -> bool {
+      if (keyval == GDK_KEY_Return || keyval == GDK_KEY_KP_Enter) {
+        on_mount_clicked();
+        return true;
+      }
+      return false;
+    }, false);
+  server_entry_.add_controller(enter_controller2);
   attach_row(domain_label_, domain_entry_);
   attach_row(mountpoint_label_, mountpoint_entry_);
   attach_row(vers_label_, vers_dropdown_);
@@ -98,6 +127,25 @@ void MountPage::build_ui()
 
   append(heading_);
   append(content_);
+}
+
+void MountPage::try_fill_credentials()
+{
+  auto server = server_entry_.get_text();
+  auto share  = share_entry_.get_text();
+
+  if (server.empty() || share.empty()) return;
+
+  // Only auto-fill if username is currently empty (don't overwrite user input)
+  if (!username_entry_.get_text().empty()) return;
+
+  auto cred = window_.credential_store().lookup(server, share);
+  if (cred) {
+    username_entry_.set_text(cred->username);
+    password_entry_.set_text(cred->password);
+    domain_entry_.set_text(cred->domain);
+    window_.set_status("Credentials loaded from keyring for " + server + "/" + share);
+  }
 }
 
 void MountPage::on_mount_clicked()

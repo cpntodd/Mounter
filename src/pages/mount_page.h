@@ -17,6 +17,7 @@ public:
 private:
   void build_ui();
   void on_mount_clicked();
+  void try_fill_credentials();
 
   Window&       window_;
 
