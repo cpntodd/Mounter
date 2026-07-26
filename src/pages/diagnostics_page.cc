@@ -2,6 +2,7 @@
 
 #include "diagnostics_page.h"
 #include "i18n.h"
+#include "../window.h"
 #include <giomm/subprocess.h>
 #include <cstdlib>
 #include <sstream>
@@ -10,8 +11,9 @@
 
 namespace Mounter {
 
-DiagnosticsPage::DiagnosticsPage()
+DiagnosticsPage::DiagnosticsPage(Window& window)
   : Gtk::Box{Gtk::Orientation::VERTICAL}
+  , window_(window)
 {
   // Define all checks with their Debian package mappings
   checks_ = {
@@ -107,6 +109,10 @@ void DiagnosticsPage::run_checks()
   }
 
   install_button_.set_sensitive(any_missing);
+
+  if (!any_missing) {
+    window_.set_status("Dependencies installed!");
+  }
 }
 
 void DiagnosticsPage::install_missing()

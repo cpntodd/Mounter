@@ -94,7 +94,7 @@ void Window::build_ui()
   mount_page_       = std::make_unique<MountPage>(*this);
   mounted_page_     = std::make_unique<MountedPage>(*this);
   profiles_page_    = std::make_unique<ProfilesPage>(*this);
-  diagnostics_page_ = std::make_unique<DiagnosticsPage>();
+  diagnostics_page_ = std::make_unique<DiagnosticsPage>(*this);
 
   // ── Stack ─────────────────────────────────────────────────
   stack_.add(*discovery_page_,   "discover-page",   "Discover");

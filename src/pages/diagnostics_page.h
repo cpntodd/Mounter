@@ -8,10 +8,12 @@
 
 namespace Mounter {
 
+class Window;
+
 class DiagnosticsPage : public Gtk::Box
 {
 public:
-  DiagnosticsPage();
+  explicit DiagnosticsPage(Window& window);
   ~DiagnosticsPage() override = default;
 
 private:
@@ -28,6 +30,8 @@ private:
   };
 
   std::vector<CheckItem> checks_;
+
+  Window&       window_;
 
   Gtk::Label    heading_{"Diagnostics"};
   Gtk::Button   check_button_{"Run Checks"};
