@@ -99,7 +99,15 @@ void MountedPage::on_mounts_changed(const std::vector<MountInfo>& mounts)
       unmount_share(mount_point);
     });
 
+    auto open_btn = Gtk::make_managed<Gtk::Button>(_("Show Folder"));
+    open_btn->set_valign(Gtk::Align::CENTER);
+    open_btn->signal_clicked().connect([mount_point]() {
+      auto uri = "file://" + mount_point;
+      Gio::AppInfo::launch_default_for_uri(uri);
+    });
+
     row->append(*info_box);
+    row->append(*open_btn);
     row->append(*unmount_btn);
     listbox_.append(*row);
   }
