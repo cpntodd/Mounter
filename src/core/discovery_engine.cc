@@ -201,8 +201,9 @@ std::vector<DiscoveredShare> DiscoveryEngine::list_shares(const std::string& hos
 
     int exit_code = proc->get_exit_status();
 
-    // Check if authentication is required
-    bool access_denied = (exit_code != 0) ||
+    // Only mark as auth-required if smbclient explicitly says ACCESS_DENIED.
+    // Other failures (timeout, connection refused, etc.) just mean no guest shares.
+    bool access_denied =
       (output.find("NT_STATUS_ACCESS_DENIED") != std::string::npos) ||
       (output.find("NT_STATUS_LOGON_FAILURE") != std::string::npos);
 
