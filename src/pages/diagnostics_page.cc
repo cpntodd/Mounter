@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <sstream>
 #include <thread>
+#include <unistd.h>
 
 namespace Mounter {
 
@@ -69,9 +70,25 @@ void DiagnosticsPage::run_checks()
   bool any_missing = false;
 
   for (auto& check : checks_) {
-    std::string cmd = std::string{"which "} + check.binary + " > /dev/null 2>&1";
-    int ret = std::system(cmd.c_str());
-    check.found = (ret == 0);
+    // Check multiple common binary paths — /sbin and /usr/sbin aren't
+    // in regular users' PATH but contain system binaries like mount.cifs
+    static const char* paths[] = {
+      "/usr/bin/", "/usr/sbin/", "/sbin/", "/bin/", nullptr
+    };
+    check.found = false;
+    for (int i = 0; paths[i] != nullptr; ++i) {
+      std::string full_path = std::string{paths[i]} + check.binary;
+      if (access(full_path.c_str(), X_OK) == 0) {
+        check.found = true;
+        break;
+      }
+    }
+    // Also try 'which' as fallback for PATH-based binaries
+    if (!check.found) {
+      std::string cmd = std::string{"which "} + check.binary + " > /dev/null 2>&1";
+      check.found = (std::system(cmd.c_str()) == 0);
+    }
+
     if (!check.found) any_missing = true;
 
     auto row = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL, 8);
