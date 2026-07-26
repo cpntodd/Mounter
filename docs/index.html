@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mounter — SMB/CIFS Mount GUI for Linux</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=VT323&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #1e1e1e;
+      --surface: #252526;
+      --text: #d4d4d4;
+      --heading: #ffffff;
+      --muted: #9d9d9d;
+      --accent: #f09040;
+      --accent-light: #f5a623;
+      --accent-dark: #cc7722;
+      --accent-glow: rgba(240,144,64,0.25);
+      --border: #3e3e42;
+      --code-bg: #2d2d2d;
+      --table-border: #f09040;
+      --display-font: 'VT323', 'Courier New', monospace;
+      --body-font: 'Space Mono', 'Courier New', monospace;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--body-font);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+    header {
+      text-align: center;
+      padding: 3rem 0 2rem;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 2rem;
+    }
+    header h1 {
+      font-family: var(--display-font);
+      font-size: 3.5rem;
+      color: var(--heading);
+      letter-spacing: 2px;
+    }
+    header p {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-top: 0.5rem;
+    }
+    nav {
+      position: sticky;
+      top: 0;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 1rem;
+      z-index: 10;
+      display: flex;
+      gap: 1.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    nav a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: color 0.2s;
+    }
+    nav a:hover { color: var(--accent-light); }
+    section {
+      margin: 2.5rem 0;
+    }
+    h2 {
+      font-family: var(--display-font);
+      font-size: 2rem;
+      color: var(--heading);
+      border-left: 4px solid var(--accent);
+      padding-left: 1rem;
+      margin-bottom: 1rem;
+      letter-spacing: 1px;
+    }
+    h3 {
+      font-family: var(--display-font);
+      font-size: 1.4rem;
+      color: var(--heading);
+      margin: 1.5rem 0 0.75rem;
+    }
+    code, pre {
+      font-family: var(--body-font);
+      background: var(--code-bg);
+      border-radius: 4px;
+    }
+    code { padding: 0.15em 0.4em; font-size: 0.9em; color: var(--accent-light); }
+    pre {
+      padding: 1rem;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      margin: 0.75rem 0;
+    }
+    pre code {
+      background: none;
+      padding: 0;
+      color: var(--text);
+    }
+    .install-block {
+      background: var(--surface);
+      border: 2px solid var(--accent);
+      border-radius: 6px;
+      padding: 1.25rem;
+      margin: 1.5rem 0;
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+    .install-block h3 {
+      color: var(--accent);
+      margin-top: 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+    }
+    th {
+      background: var(--surface);
+      color: var(--heading);
+      text-align: left;
+      padding: 0.6rem 0.8rem;
+      border-bottom: 2px solid var(--table-border);
+      font-size: 0.85rem;
+    }
+    td {
+      padding: 0.5rem 0.8rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+    .badges {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 1rem 0;
+    }
+    .badges img { height: 20px; }
+    .btn {
+      display: inline-block;
+      background: var(--accent);
+      color: #1e1e1e;
+      padding: 0.6rem 1.5rem;
+      border-radius: 4px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+    .btn:hover { background: var(--accent-light); }
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+    @media (max-width: 640px) {
+      .container { padding: 1rem; }
+      header h1 { font-size: 2.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="#install">Install</a>
+  <a href="#features">Features</a>
+  <a href="#build">Build</a>
+  <a href="#architecture">Architecture</a>
+  <a href="https://github.com/cpntodd/Mounter">GitHub</a>
+</nav>
+
+<div class="container">
+
+<header>
+  <h1>💾 Mounter</h1>
+  <p>A GUI tool for mounting SMB/CIFS network shares on Linux</p>
+  <div class="badges">
+    <img src="https://img.shields.io/badge/language-C%2B%2B17-%23f09040?style=flat-square" alt="C++17">
+    <img src="https://img.shields.io/badge/GUI-gtkmm--4.0%20%7C%20GTK4-%233584e4?style=flat-square" alt="GTK4">
+    <img src="https://img.shields.io/badge/build-Meson-%23f09040?style=flat-square" alt="Meson">
+    <img src="https://img.shields.io/badge/platform-Debian%2013%20(trixie)-%239d9d9d?style=flat-square" alt="Debian">
+    <img src="https://img.shields.io/badge/license-GPL--3.0-%23f09040?style=flat-square" alt="GPL-3.0">
+  </div>
+</header>
+
+<section id="install">
+  <div class="install-block">
+    <h3>⬇ One-Line Install</h3>
+    <pre><code>curl -fsSL https://cpntodd.github.io/Mounter/install-mounter.sh | bash</code></pre>
+  </div>
+
+  <h3>Via APT Repository</h3>
+  <pre><code>echo "deb [signed-by=/etc/apt/keyrings/mounter.asc] https://cpntodd.github.io/Mounter/repo stable main" | \
+  sudo tee /etc/apt/sources.list.d/mounter.list
+sudo curl -fsSL https://cpntodd.github.io/Mounter/repo/mounter.asc -o /etc/apt/keyrings/mounter.asc
+sudo apt update && sudo apt install mounter</code></pre>
+</section>
+
+<section id="features">
+  <h2>✨ Features</h2>
+
+  <h3>🔍 Network Discovery</h3>
+  <p>Scans your local subnet with <code>nmap</code> to find SMB hosts. Lists available shares per host. One-click <strong>Add</strong> prefills the mount form with server info.</p>
+
+  <h3>🔗 Manual Mount</h3>
+  <p>Complete SMB mount form with credential management. Mount point auto-clones share name. Credentials auto-filled from system keyring.</p>
+
+  <h3>📊 Dashboard</h3>
+  <p>Live status cards: mount count, server reachability (ping indicator), disk usage (Cairo donut chart). Quick-action buttons for all functions.</p>
+
+  <h3>💾 Persistent Mounts</h3>
+  <p>Two options: mount at boot (systemd <code>.mount</code>) or auto-mount on access (systemd <code>.automount</code> with idle timeout).</p>
+
+  <table>
+    <tr><th>Feature</th><th>Detail</th></tr>
+    <tr><td>Language</td><td>C++17</td></tr>
+    <tr><td>GUI</td><td>gtkmm-4.0 / GTK4</td></tr>
+    <tr><td>Build</td><td>Meson + Ninja</td></tr>
+    <tr><td>Auth</td><td>polkit + pkexec</td></tr>
+    <tr><td>Credentials</td><td>libsecret (Secret Service)</td></tr>
+    <tr><td>Persistence</td><td>systemd .mount / .automount</td></tr>
+    <tr><td>Package</td><td>.deb (241 KB), Flatpak, APT repo</td></tr>
+    <tr><td>License</td><td>GPL-3.0-or-later</td></tr>
+  </table>
+</section>
+
+<section id="build">
+  <h2>🏗 Build from Source</h2>
+  <pre><code>sudo apt install -y meson libgtkmm-4.0-dev libsecret-1-dev \
+  libpolkit-gobject-1-dev nlohmann-json3-dev libadwaita-1-dev
+
+git clone https://github.com/cpntodd/Mounter.git
+cd Mounter
+meson setup build
+meson compile -C build
+sudo meson install -C build
+mounter</code></pre>
+</section>
+
+<section id="architecture">
+  <h2>🧱 Architecture</h2>
+  <pre><code>┌─────────────────────────────────────────┐
+│           mounter (GUI)                 │
+│  Dashboard · Discover · Mount · ...     │
+│  ─────────────────────────────────      │
+│  Core: MountOp · Monitor · CredStore    │
+├─────────────────────────────────────────┤
+│        pkexec / polkit                  │
+├─────────────────────────────────────────┤
+│     mounter-helper (root)               │
+│  mount · umount · creds · systemd       │
+└─────────────────────────────────────────┘</code></pre>
+</section>
+
+</div>
+
+<footer>
+  <p>© 2026 <a href="https://github.com/cpntodd" style="color: var(--accent);">cpntodd</a> — GPL-3.0-or-later</p>
+</footer>
+
+</body>
+</html>

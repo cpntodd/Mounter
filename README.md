@@ -1,169 +1,153 @@
-# Mounter
+<p align="center">
+  <img src="assets/banner.gif" alt="Mounter Banner" width="100%">
+</p>
 
-**A GUI tool for mounting SMB/CIFS network shares on Linux.**
+<h1 align="center">💾 Mounter</h1>
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Platform: Linux](https://img.shields.io/badge/Platform-Linux-orange.svg)](https://github.com/cpntodd/Mounter)
+<p align="center">
+  <img src="https://img.shields.io/badge/language-C%2B%2B17-%23f09040?style=flat-square" alt="C++17">
+  <img src="https://img.shields.io/badge/GUI-gtkmm--4.0%20%7C%20GTK4-%233584e4?style=flat-square" alt="GTK4">
+  <img src="https://img.shields.io/badge/build-Meson-%23f09040?style=flat-square" alt="Meson">
+  <img src="https://img.shields.io/badge/platform-Debian%2013%20(trixie)-%239d9d9d?style=flat-square" alt="Debian">
+  <img src="https://img.shields.io/badge/license-GPL--3.0-%23f09040?style=flat-square" alt="GPL-3.0">
+  <img src="https://img.shields.io/github/stars/cpntodd/Mounter?style=flat-square&color=f09040" alt="Stars">
+</p>
 
-Stop editing `/etc/fstab` by hand. Mounter gives you a clean graphical interface to discover, mount, and manage SMB/CIFS network shares — with proper kernel-level CIFS mounts, credential storage, and persistent automounts via systemd.
-
-## Features
-
-- **Network Discovery** — scan your local subnet for SMB hosts and browse available shares
-- **Manual Mount** — enter server, share, and credentials directly
-- **Active Mount Management** — view and unmount currently connected shares
-- **Persistent Mounts** — generate systemd `.mount` + `.automount` units so shares survive reboots
-- **Credential Management** — stored securely via libsecret (GNOME Keyring / Secret Service) with plaintext fallback
-- **Profile Saving** — save connection details for one-click re-mounting
-- **Diagnostics** — check for required system dependencies at a glance
-- **DE-Agnostic** — works on GNOME, XFCE, MATE, Budgie, Sway, and more. Auto-detects your desktop for native styling.
-
-## Screenshots
-
-*(Coming soon)*
-
-## Installation
-
-### From .deb Package (Debian 13 Trixie)
-
-```bash
-# Install dependencies
-sudo apt install cifs-utils pkexec polkitd smbclient nmap libsecret-tools
-
-# Install the .deb
-sudo dpkg -i mounter_0.1.0-1_amd64.deb
-sudo apt --fix-broken install  # if needed
-```
-
-### From APT Repository (via GitHub Pages)
-
-```bash
-# Add the repository
-echo "deb [signed-by=/etc/apt/keyrings/mounter.asc] https://cpntodd.github.io/Mounter trixie main" | \
-  sudo tee /etc/apt/sources.list.d/mounter.list
-
-# Import the GPG key
-curl -fsSL https://cpntodd.github.io/Mounter/mounter.asc | \
-  sudo tee /etc/apt/keyrings/mounter.asc
-
-sudo apt update
-sudo apt install mounter
-```
-
-### From Flatpak
-
-```bash
-flatpak install flathub com.github.oddsoul.Mounter
-```
-
-### From Source
-
-```bash
-# Install build dependencies
-sudo apt install meson libgtkmm-4.0-dev libsecret-1-dev \
-  libpolkit-gobject-1-dev nlohmann-json3-dev libadwaita-1-dev
-
-# Build
-meson setup build
-cd build
-meson compile
-
-# Install
-sudo meson install
-```
-
-## Usage
-
-```bash
-# Run with auto-detected styling
-mounter
-
-# Force GNOME/libadwaita styling
-mounter --style=adwaita
-
-# Force plain GTK4 styling (works on any DE)
-mounter --style=plain
-```
-
-### Privilege Model
-
-Mounter uses **polkit** for privilege escalation:
-
-- Mount/umount operations require root (via `mount.cifs`)
-- A helper binary (`mounter-helper`) performs privileged operations
-- The GUI invokes it via `pkexec`, which shows a graphical password prompt
-- Polkit policy allows `auth_self_keep` — you authenticate once per session
-- To enable passwordless operation for `sudo` group members, add a polkit rule (see `data/com.github.oddsoul.Mounter.policy`)
-
-## Architecture
-
-```
-mounter               (GUI, user process)
-  ├── Discovery Engine    (nmap + smbclient)
-  ├── Mount Operation     (talks to helper via pkexec)
-  ├── Credential Store    (libsecret + file fallback)
-  ├── Mount Monitor       (polls /proc/mounts)
-  ├── Systemd Manager     (generates .mount units)
-  └── Style Manager       (DE auto-detection)
-
-mounter-helper        (privileged process, runs as root via pkexec)
-  ├── mount              (mount -t cifs)
-  ├── umount             (umount with lazy fallback)
-  ├── write-cred         (secure credential file creation)
-  └── write-unit         (systemd unit file creation)
-```
-
-## Tech Stack
-
-- **Language:** C++17
-- **GUI:** GTK4 via gtkmm-4.0
-- **Build:** Meson
-- **Credential Storage:** libsecret (Secret Service API)
-- **Privilege Escalation:** polkit + pkexec
-- **Packaging:** .deb (dh + meson), Flatpak, APT repo via GitHub Pages
-
-## Project Structure
-
-```
-mounter/
-├── src/
-│   ├── main.cc                    # Entry point
-│   ├── application.h/cc           # Gtk::Application subclass
-│   ├── window.h/cc                # Main window with sidebar + stack
-│   ├── pages/                     # 5 tab pages
-│   │   ├── discovery_page.*       # Network scan & browse
-│   │   ├── mount_page.*           # Manual mount form
-│   │   ├── mounted_page.*         # Active mounts list
-│   │   ├── profiles_page.*        # Saved profiles
-│   │   └── diagnostics_page.*     # Dependency checks
-│   ├── core/                      # Business logic
-│   │   ├── mount_operation.*      # mount.cifs wrapper
-│   │   ├── credential_store.*     # libsecret integration
-│   │   ├── mount_monitor.*        # /proc/mounts polling
-│   │   ├── discovery_engine.*     # nmap + smbclient
-│   │   └── systemd_manager.*      # Unit generation
-│   ├── helpers/
-│   │   └── mounter-helper.cc      # Privileged operations binary
-│   └── ui/
-│       └── style_manager.*        # DE detection & theming
-├── data/                          # Desktop entry, metainfo, icons, polkit policy
-├── packaging/                     # Debian, Flatpak, APT repo configs
-├── meson.build                    # Build system
-└── LICENSE
-```
-
-## Development Status
-
-**Phase 1 (current):** Skeleton — builds, installs, shows window with all 5 tabs.  
-**Phase 2 (next):** Core mount/umount operations with helper binary.  
-**Phase 3:** Full GUI implementation (discovery, profiles, etc.).  
-**Phase 4:** Persistence via systemd units.  
-**Phase 5:** Polish, error handling, packaging.
-
-## License
-
-GNU General Public License v3.0 or later. See [LICENSE](LICENSE).
+<p align="center"><b><i>A GUI tool for mounting SMB/CIFS network shares on Linux.</i></b></p>
 
 ---
 
-**Why:** Existing solutions either drag in 50+ KDE dependencies (smb4k) or are Python-based with heavy runtimes. Mounter is a focused, native C++ GTK4 tool that does one thing well: mount SMB shares without touching the terminal.
+## 📦 INSTALL
+
+```bash
+curl -fsSL https://cpntodd.github.io/Mounter/install-mounter.sh | bash
+```
+
+**Or via apt repository (Debian 13):**
+
+```bash
+echo "deb [signed-by=/etc/apt/keyrings/mounter.asc] https://cpntodd.github.io/Mounter/repo stable main" | \
+  sudo tee /etc/apt/sources.list.d/mounter.list
+sudo curl -fsSL https://cpntodd.github.io/Mounter/repo/mounter.asc -o /etc/apt/keyrings/mounter.asc
+sudo apt update && sudo apt install mounter
+```
+
+---
+
+## ✨ MAJOR FEATURES
+
+### 🔍 Network Discovery
+Scans your local subnet with `nmap` to find SMB hosts. Lists available shares per host. One-click **Add** prefills the mount form with server info.
+
+### 🔗 Manual Mount
+Complete SMB mount form — server, share, credentials, SMB version, mount point. Credentials auto-filled from the system keyring. Mount point auto-clones the share name.
+
+### 📂 Mounted Shares Management
+Live view of all active CIFS mounts. **Show Folder** opens the path in your file manager. **Unmount** disconnects with lazy fallback for stale mounts.
+
+### 💾 Persistent Mounts
+Two independent persistence options:
+- **Mount at boot** — systemd `.mount` unit with `network-online.target` dependency
+- **Auto-mount on access** — systemd `.automount` unit, mounts lazily, unmounts after idle
+
+### 📊 Dashboard
+Default start page with live status cards: mounted share count, server reachability (ping indicator), disk usage (Cairo donut chart). Quick-action buttons for all major functions.
+
+### 🔐 Credential Management
+Credentials stored via **libsecret** (GNOME Keyring / Secret Service) with a JSON file fallback. Auto-retrieved when you type a known server+share pair.
+
+### ⭐ Profiles
+Every successful mount auto-creates a profile for one-click reconnection. Profiles persist across sessions in `~/.config/mounter/profiles.json`.
+
+### 🩺 Diagnostics
+Checks for all required and optional system dependencies. **Install** button auto-installs missing packages via `pkexec apt-get install`.
+
+---
+
+## 📋 SPECS
+
+| Category | Detail |
+|:----------|:--------|
+| **Language** | C++17 |
+| **GUI Toolkit** | gtkmm-4.0 / GTK4 |
+| **Build System** | Meson + Ninja |
+| **Auth** | polkit + pkexec (passwordless for `sudo` group) |
+| **Credential Store** | libsecret (Secret Service) |
+| **Persistence** | systemd `.mount` / `.automount` units |
+| **Charts** | Cairo (custom `PieChart` widget) |
+| **JSON** | nlohmann/json |
+| **Target** | Debian 13 (trixie) |
+| **Package** | `.deb` (241 KB), Flatpak, APT repo |
+| **License** | GPL-3.0-or-later |
+
+---
+
+## 🏗 BUILD FROM SOURCE
+
+```bash
+# Install build dependencies
+sudo apt install -y meson libgtkmm-4.0-dev libsecret-1-dev \
+  libpolkit-gobject-1-dev nlohmann-json3-dev libadwaita-1-dev
+
+# Clone and build
+git clone https://github.com/cpntodd/Mounter.git
+cd Mounter
+meson setup build
+meson compile -C build
+
+# Install
+sudo meson install -C build
+
+# Run
+mounter
+```
+
+### Build .deb package
+
+```bash
+ln -sf packaging/debian debian
+mkdir -p debian/source && echo "3.0 (native)" > debian/source/format
+dpkg-buildpackage -us -uc -b
+# produces ../mounter_0.1.0-1_amd64.deb (241 KB)
+```
+
+---
+
+## 🧱 ARCHITECTURE
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                     mounter (GUI)                       │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌───────────┐  │
+│  │ Dashboard│ │ Discover │ │  Mount   │ │  Mounted  │  │
+│  │   Page   │ │   Page   │ │   Page   │ │   Page    │  │
+│  └──────────┘ └──────────┘ └──────────┘ └───────────┘  │
+│  ┌──────────┐ ┌──────────┐                             │
+│  │ Profiles │ │Diagnostic│                             │
+│  │   Page   │ │   Page   │                             │
+│  └──────────┘ └──────────┘                             │
+│                         │                              │
+│  ┌──────────────────────┼──────────────────────────┐   │
+│  │     Core Services    │                          │   │
+│  │  MountOperation  MountMonitor  CredentialStore  │   │
+│  │  DiscoveryEngine  SystemdManager  StyleManager  │   │
+│  └──────────────────────┼──────────────────────────┘   │
+├──────────────────────────┼──────────────────────────────┤
+│            pkexec │ polkit (privilege escalation)       │
+├──────────────────────────┼──────────────────────────────┤
+│              mounter-helper (root process)              │
+│     mount  ·  umount  ·  write-cred  ·  write-unit      │
+└─────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📚 LINKS
+
+- [GitHub Repository](https://github.com/cpntodd/Mounter)
+- [Issues & Bug Reports](https://github.com/cpntodd/Mounter/issues)
+- [Developer: cpntodd](https://github.com/cpntodd)
+
+---
+
+<p align="center"><sub>© 2026 cpntodd — GPL-3.0-or-later</sub></p>
