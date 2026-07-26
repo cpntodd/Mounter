@@ -1,6 +1,7 @@
 /* discovery_engine.cc — nmap + smbclient based SMB discovery */
 
 #include "discovery_engine.h"
+#include "net_util.h"
 
 #include <glibmm/main.h>
 #include <giomm/subprocess.h>
@@ -169,7 +170,8 @@ std::vector<std::string> DiscoveryEngine::scan_hosts(const std::string& subnet)
 
     for (auto it = begin; it != end; ++it) {
       std::string ip = (*it)[1].str();
-      hosts.push_back(ip);
+      // Wrap IPv6 addresses in brackets for SMB URL compatibility
+      hosts.push_back(NetUtil::bracket_if_ipv6(ip));
     }
   } catch (...) {}
 
@@ -243,10 +245,13 @@ std::vector<DiscoveredShare> DiscoveryEngine::list_shares(const std::string& hos
 
 std::string DiscoveryEngine::resolve_hostname(const std::string& ip)
 {
+  // Strip brackets from IPv6 before DNS lookup
+  std::string clean_ip = NetUtil::unbracket(ip);
+
   struct sockaddr_in sa;
   std::memset(&sa, 0, sizeof(sa));
   sa.sin_family = AF_INET;
-  inet_pton(AF_INET, ip.c_str(), &sa.sin_addr);
+  inet_pton(AF_INET, clean_ip.c_str(), &sa.sin_addr);
 
   char hostname[NI_MAXHOST];
   int ret = getnameinfo(

@@ -1,6 +1,7 @@
 /* diagnostics_page.cc */
 
 #include "diagnostics_page.h"
+#include "i18n.h"
 #include <cstdlib>
 
 namespace Mounter {

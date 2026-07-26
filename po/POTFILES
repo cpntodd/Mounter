@@ -1,0 +1,13 @@
+# List of source files containing translatable strings.
+# Used by xgettext to extract messages for translation.
+# Relative paths from the project root.
+
+src/main.cc
+src/application.cc
+src/window.cc
+src/pages/discovery_page.cc
+src/pages/mount_page.cc
+src/pages/mounted_page.cc
+src/pages/profiles_page.cc
+src/pages/diagnostics_page.cc
+src/helpers/mounter-helper.cc

@@ -1,6 +1,7 @@
 /* mount_page.cc — Manual mount form with systemd integration */
 
 #include "mount_page.h"
+#include "i18n.h"
 #include "../window.h"
 #include "../core/mount_operation.h"
 #include "../core/credential_store.h"

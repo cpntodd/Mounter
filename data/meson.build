@@ -26,6 +26,12 @@ install_data(
   install_dir: polkitdir,
 )
 
+# ── Polkit rules (passwordless for sudo group) ────────────────
+install_data(
+  '50-mounter.rules',
+  install_dir: polkitrulesdir,
+)
+
 # ── Application icon ──────────────────────────────────────────
 install_data(
   'icons/com.github.oddsoul.Mounter.svg',

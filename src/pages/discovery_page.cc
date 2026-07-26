@@ -1,6 +1,7 @@
 /* discovery_page.cc — Network discovery with scan + mount */
 
 #include "discovery_page.h"
+#include "i18n.h"
 #include "../window.h"
 #include "../core/discovery_engine.h"
 #include "../core/mount_operation.h"
@@ -32,7 +33,7 @@ void DiscoveryPage::build_ui()
   scan_button_.signal_clicked().connect(
     sigc::mem_fun(*this, &DiscoveryPage::on_scan_clicked));
 
-  stop_button_.set_label("Stop");
+  stop_button_.set_label(_("Stop"));
   stop_button_.set_visible(false);
   stop_button_.signal_clicked().connect([this]() {
     // TODO: wire cancel to the DiscoveryEngine instance
@@ -200,7 +201,7 @@ void DiscoveryPage::on_results(const std::vector<DiscoveredHost>& hosts)
       }
 
       // Mount button
-      auto mount_btn = Gtk::make_managed<Gtk::Button>("Mount");
+      auto mount_btn = Gtk::make_managed<Gtk::Button>(_("Mount"));
       mount_btn->get_style_context()->add_class("suggested-action");
       auto server = host.ip_address;
       auto share_name_copy = share.name;

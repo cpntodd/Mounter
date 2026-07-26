@@ -1,6 +1,7 @@
 /* mounted_page.cc — Active mounts list with unmount */
 
 #include "mounted_page.h"
+#include "i18n.h"
 #include "../window.h"
 #include "../core/mount_monitor.h"
 #include "../core/mount_operation.h"
@@ -89,7 +90,7 @@ void MountedPage::on_mounts_changed(const std::vector<MountInfo>& mounts)
     info_box->append(*share_label);
     info_box->append(*mount_label);
 
-    auto unmount_btn = Gtk::make_managed<Gtk::Button>("Unmount");
+    auto unmount_btn = Gtk::make_managed<Gtk::Button>(_("Unmount"));
     unmount_btn->set_valign(Gtk::Align::CENTER);
     unmount_btn->get_style_context()->add_class("destructive-action");
 

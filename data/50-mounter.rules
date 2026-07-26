@@ -1,0 +1,16 @@
+// Polkit local authority rule for Mounter.
+//
+// Allows members of the 'sudo' group to perform mount/umount/systemd
+// operations without a password prompt, while still requiring
+// authentication for non-sudo users.
+//
+// Install to: /usr/share/polkit-1/rules.d/50-mounter.rules
+//
+// To customize: copy this file to /etc/polkit-1/rules.d/ and edit.
+
+polkit.addRule(function(action, subject) {
+    if (action.id.startsWith("com.github.oddsoul.Mounter.") &&
+        subject.isInGroup("sudo")) {
+        return polkit.Result.YES;
+    }
+});

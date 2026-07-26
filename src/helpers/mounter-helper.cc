@@ -28,6 +28,7 @@
  */
 
 #include <iostream>
+#include "i18n.h"
 #include <string>
 #include <string_view>
 #include <cstdlib>

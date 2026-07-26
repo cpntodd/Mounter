@@ -46,8 +46,16 @@ icondir      = datadir / 'icons' / 'hicolor' / 'scalable' / 'apps'
 metainfodir  = datadir / 'metainfo'
 desktopdir   = datadir / 'applications'
 polkitdir    = datadir / 'polkit-1' / 'actions'
+polkitrulesdir = datadir / 'polkit-1' / 'rules.d'
 helperdir    = libexecdir / 'mounter'
+
+# ── i18n / gettext ────────────────────────────────────────────
+i18n = import('i18n')
+localedir = datadir / 'locale'
+add_project_arguments('-DGETTEXT_PACKAGE="mounter"', language: 'cpp')
+add_project_arguments('-DLOCALEDIR="' + prefix / localedir + '"', language: 'cpp')
 
 # ── Subdirs ───────────────────────────────────────────────────
 subdir('src')
 subdir('data')
+subdir('po')

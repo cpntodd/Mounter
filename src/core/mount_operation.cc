@@ -1,6 +1,7 @@
 /* mount_operation.cc — Mount/umount subprocess execution */
 
 #include "mount_operation.h"
+#include "net_util.h"
 
 #include <glibmm/main.h>
 #include <giomm/subprocess.h>
@@ -86,7 +87,7 @@ void MountOperation::unmount_async(const std::string& mount_point,
 std::string MountOperation::build_mount_json(const MountParams& params)
 {
   nlohmann::json j;
-  j["server"]       = params.server;
+  j["server"]       = NetUtil::bracket_if_ipv6(params.server);
   j["share"]        = params.share;
   j["mount_point"]  = params.mount_point;
   j["username"]     = params.username;

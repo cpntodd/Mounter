@@ -1,6 +1,7 @@
 /* mount_monitor.cc — Parses /proc/mounts for CIFS entries */
 
 #include "mount_monitor.h"
+#include "net_util.h"
 #include <glibmm/main.h>
 #include <fstream>
 #include <sstream>
@@ -68,11 +69,8 @@ bool MountMonitor::poll()
         }
       }
 
-      // Handle IPv6 addresses in device (enclosed in brackets or with colons)
-      // e.g., //[fe80::1]/share — strip brackets
-      if (!info.server.empty() && info.server.front() == '[' && info.server.back() == ']') {
-        info.server = info.server.substr(1, info.server.size() - 2);
-      }
+      // Strip brackets from IPv6 addresses for display
+      info.server = NetUtil::unbracket(info.server);
 
       mounts.push_back(std::move(info));
     }

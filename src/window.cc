@@ -1,6 +1,7 @@
 /* window.cc — Mounter::Window implementation */
 
 #include "window.h"
+#include "i18n.h"
 #include "application.h"
 #include "core/mount_monitor.h"
 #include "core/mount_operation.h"
@@ -80,7 +81,7 @@ void Window::setup_shortcuts()
   // Escape: clear status
   auto escape_action = Gio::SimpleAction::create("clear-status");
   escape_action->signal_activate().connect([this](const Glib::VariantBase&) {
-    set_status("Ready");
+    set_status(_("Ready"));
   });
   app_.add_action(escape_action);
   app_.set_accel_for_action("app.clear-status", "Escape");
@@ -97,10 +98,10 @@ void Window::build_ui()
 
   // ── Stack ─────────────────────────────────────────────────
   stack_.add(*discovery_page_,   "discover-page",   "Discover");
-  stack_.add(*mount_page_,       "mount-page",      "Manual Mount");
+  stack_.add(*mount_page_,       "mount-page",      C_("page-title", "Manual Mount"));
   stack_.add(*mounted_page_,     "mounted-page",    "Mounted");
   stack_.add(*profiles_page_,    "profiles-page",   "Profiles");
-  stack_.add(*diagnostics_page_, "diagnostics-page", "Diagnostics");
+  stack_.add(*diagnostics_page_, "diagnostics-page", C_("page-title", "Diagnostics"));
 
   // ── Sidebar ───────────────────────────────────────────────
   sidebar_.set_stack(stack_);
@@ -112,7 +113,7 @@ void Window::build_ui()
 
   statusbar_.set_margin_start(6);
   statusbar_.set_margin_end(6);
-  statusbar_.push("Ready");
+  statusbar_.push(_("Ready"));
 
   root_box_.append(main_box_);
   root_box_.append(statusbar_);

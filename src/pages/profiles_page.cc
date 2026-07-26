@@ -1,6 +1,7 @@
 /* profiles_page.cc — Profile management */
 
 #include "profiles_page.h"
+#include "i18n.h"
 #include "../window.h"
 #include "../core/mount_operation.h"
 #include "../core/credential_store.h"
@@ -69,7 +70,7 @@ void ProfilesPage::build_ui()
     // Create a blank profile for manual editing
     ProfileEntry entry;
     entry.id   = generate_uuid();
-    entry.name = "New Profile";
+    entry.name = _("New Profile");
     profiles_.push_back(entry);
     save_profiles();
     refresh_list();
@@ -211,10 +212,10 @@ void ProfilesPage::refresh_list()
     info->append(*detail);
 
     // Action buttons
-    auto mount_btn = Gtk::make_managed<Gtk::Button>("Mount");
+    auto mount_btn = Gtk::make_managed<Gtk::Button>(_("Mount"));
     mount_btn->get_style_context()->add_class("suggested-action");
 
-    auto delete_btn = Gtk::make_managed<Gtk::Button>("Delete");
+    auto delete_btn = Gtk::make_managed<Gtk::Button>(_("Delete"));
     delete_btn->get_style_context()->add_class("destructive-action");
 
     auto profile_copy = profile; // capture by value
