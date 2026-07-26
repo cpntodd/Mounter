@@ -18,17 +18,9 @@ jobs:
         run: |
           apt-get update
           apt-get install -y --no-install-recommends \
-            build-essential \
-            meson \
-            ninja-build \
-            pkgconf \
-            libgtkmm-4.0-dev \
-            libsecret-1-dev \
-            libpolkit-gobject-1-dev \
-            nlohmann-json3-dev \
-            libadwaita-1-dev \
-            devscripts \
-            debhelper-compat
+            build-essential meson ninja-build pkgconf \
+            libgtkmm-4.0-dev libsecret-1-dev libpolkit-gobject-1-dev \
+            nlohmann-json3-dev libadwaita-1-dev devscripts debhelper-compat
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,12 +28,9 @@ jobs:
       - name: Build .deb package
         run: |
           ln -sf packaging/debian debian
-          mkdir -p debian/source
-          echo "3.0 (native)" > debian/source/format
+          mkdir -p debian/source && echo "3.0 (native)" > debian/source/format
           dpkg-buildpackage -us -uc -b
-          mkdir -p artifacts
-          cp ../mounter_*.deb artifacts/
-          cp ../mounter-dbgsym_*.deb artifacts/ || true
+          mkdir -p artifacts && cp ../mounter_*.deb artifacts/ || true
 
       - name: Upload .deb artifact
         uses: actions/upload-artifact@v4
@@ -65,6 +54,26 @@ jobs:
           bundle: mounter.flatpak
           manifest-path: packaging/flatpak/com.github.oddsoul.Mounter.yml
           cache-key: flatpak-builder-${{ github.sha }}
+
+  release:
+    name: Create GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build-deb, build-flatpak]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download .deb
+        uses: actions/download-artifact@v4
+        with:
+          name: mounter-deb
+          path: artifacts/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: artifacts/*.deb
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # Placeholder for apt-repo deployment on release
   # deploy-apt:

@@ -1,0 +1,17 @@
+{
+  "name": "Mounter",
+  "summary": "GUI tool for mounting SMB/CIFS network shares on Linux",
+  "description": "Mounter provides a graphical interface for discovering, mounting, and managing SMB/CIFS network shares. Features include network discovery via nmap, credential management via libsecret, persistent mounts via systemd, and a dashboard with live status.",
+  "categories": ["Network", "FileTools"],
+  "keywords": ["smb", "cifs", "samba", "mount", "network", "share", "nas"],
+  "license": "GPL-3.0-or-later",
+  "homepage": "https://github.com/cpntodd/Mounter",
+  "developer_name": "cpntodd",
+  "icon": "com.github.oddsoul.Mounter.svg",
+  "screenshots": [],
+  "urls": {
+    "homepage": "https://github.com/cpntodd/Mounter",
+    "bugtracker": "https://github.com/cpntodd/Mounter/issues",
+    "donation": "https://github.com/sponsors/cpntodd"
+  }
+}

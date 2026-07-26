@@ -4,18 +4,19 @@ runtime-version: "47"
 sdk: org.gnome.Sdk
 command: mounter
 finish-args:
-  # Network access for SMB discovery and mounting
   - --share=network
-  # Access to /proc/mounts for monitoring active mounts (read-only)
-  - --filesystem=/proc/mounts:ro
-  # D-Bus access for polkit and secret service
+  - --share=ipc
   - --socket=session-bus
   - --socket=system-bus
-  # Allow talking to polkit daemon
+  - --filesystem=host
+  - --filesystem=/proc/mounts:ro
   - --system-talk-name=org.freedesktop.PolicyKit1
-  # Allow talking to secret service (GNOME Keyring)
   - --talk-name=org.freedesktop.secrets
-
+  - --talk-name=org.freedesktop.Flatpak
+cleanup:
+  - /include
+  - /lib/pkgconfig
+  - /share/man
 modules:
   - name: mounter
     buildsystem: meson
@@ -23,5 +24,6 @@ modules:
       - -Dprefix=/app
       - -Dlibexecdir=/app/libexec
     sources:
-      - type: dir
-        path: ../../
+      - type: git
+        url: https://github.com/cpntodd/Mounter.git
+        tag: master
