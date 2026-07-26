@@ -44,7 +44,11 @@ void Application::on_activate()
 {
   if (!window_) {
     window_ = std::make_unique<Window>(*this);
+    add_window(*window_);
   }
+
+  // Explicitly show before present — required on some Wayland compositors
+  window_->set_visible(true);
   window_->present();
 }
 

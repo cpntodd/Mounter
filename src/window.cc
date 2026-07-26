@@ -98,10 +98,10 @@ void Window::build_ui()
 
   // ── Stack ─────────────────────────────────────────────────
   stack_.add(*discovery_page_,   "discover-page",   "Discover");
-  stack_.add(*mount_page_,       "mount-page",      C_("page-title", "Manual Mount"));
+  stack_.add(*mount_page_,       "mount-page",      _("Manual Mount"));
   stack_.add(*mounted_page_,     "mounted-page",    "Mounted");
   stack_.add(*profiles_page_,    "profiles-page",   "Profiles");
-  stack_.add(*diagnostics_page_, "diagnostics-page", C_("page-title", "Diagnostics"));
+  stack_.add(*diagnostics_page_, "diagnostics-page", _("Diagnostics"));
 
   // ── Sidebar ───────────────────────────────────────────────
   sidebar_.set_stack(stack_);
