@@ -40,7 +40,6 @@ void MountPage::prefill_from_discovery(const std::string& server,
 
   // Reset mount point to default
   mountpoint_entry_.set_text("/media/");
-  mount_point_auto_ = true;
 
   // Try to auto-fill credentials from stored keyring
   try_fill_credentials();
@@ -97,21 +96,10 @@ void MountPage::build_ui()
 
   share_entry_.signal_changed().connect([this]() {
     auto share = share_entry_.get_text();
-    if (mount_point_auto_) {
+    if (!share.empty()) {
       mountpoint_entry_.set_text("/media/" + share);
     }
     try_fill_credentials();
-  });
-
-  // Detect manual edits to mount point — stop auto-filling
-  mountpoint_entry_.signal_changed().connect([this]() {
-    // If the change wasn't triggered by our auto-fill above,
-    // check if the content still matches the auto pattern
-    auto share = share_entry_.get_text();
-    auto expected = share.empty() ? "/media/" : ("/media/" + share);
-    if (mountpoint_entry_.get_text() != expected) {
-      mount_point_auto_ = false;
-    }
   });
 
   server_entry_.signal_changed().connect([this]() {

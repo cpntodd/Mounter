@@ -48,8 +48,6 @@ private:
   Gtk::CheckButton persist_check_{"Make persistent (systemd automount)"};
   Gtk::Spinner  spinner_;
   Gtk::Box      content_{Gtk::Orientation::VERTICAL};
-
-  bool mount_point_auto_{true};  // true until user manually edits mount point
 };
 
 } // namespace Mounter
