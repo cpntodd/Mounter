@@ -118,6 +118,126 @@ bool ensure_directory(const std::string& path, mode_t /*mode*/ = 0755)
 
 // ── Command handlers ────────────────────────────────────────
 
+int cmd_mount(const std::string& json);  // forward decl
+
+int cmd_mount_full(const std::string& json)
+{
+  // 1. First, do the actual mount
+  auto mount_result = run_command_capture(""); // placeholder, we'll build the cmd
+  // Reuse the mount logic by calling cmd_mount first
+  // Actually, let's inline the mount for full control
+
+  auto server     = json_get_string(json, "server");
+  auto share      = json_get_string(json, "share");
+  auto mountpoint = json_get_string(json, "mount_point");
+  auto username   = json_get_string(json, "username");
+  auto password   = json_get_string(json, "password");
+  auto domain     = json_get_string(json, "domain");
+  auto version    = json_get_string(json, "smb_version");
+  auto options    = json_get_string(json, "extra_options");
+  auto persistent = json_get_string(json, "persistent");
+
+  if (server.empty() || share.empty() || mountpoint.empty()) {
+    std::cout << R"JSON({"success":false,"error":"Missing required fields (server, share, mount_point)"})JSON" << std::endl;
+    return 1;
+  }
+
+  if (version.empty()) version = "3.1.1";
+
+  // Step 1: Create mount point
+  if (!ensure_directory(mountpoint)) {
+    std::cout << R"JSON({"success":false,"error":"Failed to create mount point directory"})JSON" << std::endl;
+    return 1;
+  }
+
+  // Step 2: Mount the share
+  std::ostringstream cmd;
+  cmd << "mount -t cifs \"//" << server << "/" << share << "\""
+      << " \"" << mountpoint << "\""
+      << " -o vers=" << version;
+
+  if (!username.empty()) cmd << ",username=" << username;
+  if (!password.empty()) cmd << ",password=" << password;
+  if (!domain.empty())   cmd << ",domain=" << domain;
+  if (!options.empty())  cmd << "," << options;
+
+  cmd << ",uid=" << getuid() << ",gid=" << getgid();
+
+  auto result = run_command_capture(cmd.str());
+  if (result.exit_code != 0) {
+    std::string escaped = result.output;
+    for (auto& c : escaped) { if (c == '\n' || c == '\r') c = ' '; if (c == '"') c = '\''; }
+    std::cout << R"JSON({"success":false,"error":")JSON"
+              << escaped << " (exit " << result.exit_code << ")"
+              << R"JSON("})JSON" << std::endl;
+    return result.exit_code;
+  }
+
+  // Step 3: If persistent, write credentials and systemd units
+  if (persistent == "true" || persistent == "1") {
+    // Write credentials file
+    std::string cred_dir = "/etc/mounter/creds";
+    ensure_directory(cred_dir, 0700);
+    std::string cred_path = cred_dir + "/" + server + "-" + share + ".cred";
+
+    std::ostringstream cred_content;
+    cred_content << "username=" << username << "\n"
+                 << "password=" << password << "\n";
+    if (!domain.empty()) cred_content << "domain=" << domain << "\n";
+
+    write_file(cred_path, cred_content.str(), 0600);
+
+    // Generate systemd unit names
+    std::string escaped;
+    for (char c : mountpoint) {
+      if (c == '/') { if (!escaped.empty()) escaped += '-'; }
+      else if (c == '-') escaped += "\\x2d";
+      else escaped += c;
+    }
+    if (!escaped.empty() && escaped[0] == '-') escaped.erase(0, 1);
+
+    // Write .mount unit
+    std::ostringstream mount_unit;
+    mount_unit << "[Unit]\n"
+               << "Description=Mount SMB share: " << server << "/" << share << "\n"
+               << "After=network-online.target\n"
+               << "Wants=network-online.target\n\n"
+               << "[Mount]\n"
+               << "What=//" << server << "/" << share << "\n"
+               << "Where=" << mountpoint << "\n"
+               << "Type=cifs\n"
+               << "Options=credentials=" << cred_path
+               << ",vers=" << version;
+    if (!options.empty()) mount_unit << "," << options;
+    mount_unit << "\nTimeoutSec=30\n\n"
+               << "[Install]\n"
+               << "WantedBy=multi-user.target\n";
+
+    write_file("/etc/systemd/system/" + escaped + ".mount",
+               mount_unit.str(), 0644);
+
+    // Write .automount unit
+    std::ostringstream am_unit;
+    am_unit << "[Unit]\n"
+            << "Description=Automount SMB share: " << server << "/" << share << "\n\n"
+            << "[Automount]\n"
+            << "Where=" << mountpoint << "\n"
+            << "TimeoutIdleSec=600\n\n"
+            << "[Install]\n"
+            << "WantedBy=multi-user.target\n";
+
+    write_file("/etc/systemd/system/" + escaped + ".automount",
+               am_unit.str(), 0644);
+
+    // Reload and enable
+    run_command_capture("systemctl daemon-reload");
+    run_command_capture("systemctl enable --now " + escaped + ".automount");
+  }
+
+  std::cout << R"JSON({"success":true})JSON" << std::endl;
+  return 0;
+}
+
 int cmd_mount(const std::string& json)
 {
   auto server     = json_get_string(json, "server");
@@ -295,6 +415,8 @@ int main(int argc, char* argv[])
 
   if (command == "mount") {
     return cmd_mount(json_input);
+  } else if (command == "mount-full") {
+    return cmd_mount_full(json_input);
   } else if (command == "umount") {
     return cmd_umount(json_input);
   } else if (command == "write-cred") {

@@ -50,7 +50,7 @@ void MountOperation::mount_async(const MountParams& params,
   worker_ = std::thread([this, callback = std::move(callback), json_payload]() mutable {
     if (cancelled_.load(std::memory_order_acquire)) return;
 
-    auto result = execute_helper("mount", json_payload);
+    auto result = execute_helper("mount-full", json_payload);
 
     if (callback && !cancelled_.load(std::memory_order_acquire)) {
       Glib::signal_idle().connect_once([callback = std::move(callback), result]() {
@@ -95,6 +95,7 @@ std::string MountOperation::build_mount_json(const MountParams& params)
   j["domain"]       = params.domain;
   j["smb_version"]  = params.smb_version;
   j["extra_options"] = params.extra_options;
+  j["persistent"]   = params.persistent ? "true" : "false";
   return j.dump();
 }
 

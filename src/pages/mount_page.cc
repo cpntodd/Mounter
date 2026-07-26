@@ -5,14 +5,6 @@
 #include "../window.h"
 #include "../core/mount_operation.h"
 #include "../core/credential_store.h"
-#include "../core/systemd_manager.h"
-#include <giomm/subprocess.h>
-#include <nlohmann/json.hpp>
-#include <thread>
-
-#ifndef HELPER_PATH
-  #define HELPER_PATH "/usr/libexec/mounter/mounter-helper"
-#endif
 
 namespace Mounter {
 
@@ -247,45 +239,6 @@ void MountPage::on_mount_clicked()
         window_.credential_store().store(cred);
 
         password_entry_.set_text("");
-
-        // Create persistent systemd units if requested
-        if (params.persistent) {
-          SystemdMountConfig syscfg;
-          syscfg.server      = params.server;
-          syscfg.share       = params.share;
-          syscfg.mount_point = params.mount_point;
-          syscfg.smb_version = params.smb_version;
-          syscfg.credentials_file = "/etc/mounter/creds/" +
-            params.server + "-" + params.share + ".cred";
-
-          // Write the credentials file via helper first
-          nlohmann::json cred_json;
-          cred_json["path"]     = syscfg.credentials_file;
-          cred_json["username"] = params.username;
-          cred_json["password"] = params.password;
-          cred_json["domain"]   = params.domain;
-
-          // Run the credential write in background
-          std::thread([cred_json = std::move(cred_json), syscfg]() {
-            try {
-              auto proc = Gio::Subprocess::create(
-                std::vector<std::string>{"pkexec", HELPER_PATH, "write-cred"},
-                Gio::Subprocess::Flags::STDIN_PIPE |
-                Gio::Subprocess::Flags::STDOUT_PIPE |
-                Gio::Subprocess::Flags::STDERR_SILENCE);
-
-              auto cred_bytes = Glib::Bytes::create(
-                cred_json.dump().data(), cred_json.dump().size());
-              proc->communicate(cred_bytes, nullptr);
-
-              if (proc->get_exit_status() == 0) {
-                // Now create systemd units
-                SystemdManager mgr;
-                mgr.create_and_enable_async(syscfg, nullptr);
-              }
-            } catch (...) {}
-          }).detach();
-        }
       } else {
         window_.set_status("Mount failed: " + result.error_message);
       }
