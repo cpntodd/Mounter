@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- A simple network-drive/folder icon for Mounter -->
+  <!-- Background circle (network) -->
+  <circle cx="64" cy="64" r="58" fill="#3584e4" opacity="0.15"/>
+  <circle cx="64" cy="64" r="44" fill="none" stroke="#3584e4" stroke-width="3" opacity="0.4"/>
+
+  <!-- Folder shape -->
+  <path d="M 24,42 L 24,38 A 6,6 0 0,1 30,32 L 54,32 L 60,38 L 104,38 A 6,6 0 0,1 110,44 L 110,90 A 6,6 0 0,1 104,96 L 24,96 A 6,6 0 0,1 18,90 L 18,42 Z"
+        fill="#3584e4" stroke="#1a5fb4" stroke-width="2" stroke-linejoin="round"/>
+
+  <!-- Network nodes (small circles connected by lines) -->
+  <circle cx="64" cy="58" r="4" fill="#ffffff"/>
+  <circle cx="48" cy="50" r="3" fill="#ffffff" opacity="0.8"/>
+  <circle cx="80" cy="50" r="3" fill="#ffffff" opacity="0.8"/>
+  <circle cx="54" cy="68" r="2.5" fill="#ffffff" opacity="0.6"/>
+  <circle cx="74" cy="68" r="2.5" fill="#ffffff" opacity="0.6"/>
+
+  <!-- Connection lines -->
+  <line x1="64" y1="58" x2="48" y2="50" stroke="#ffffff" stroke-width="1.5" opacity="0.7"/>
+  <line x1="64" y1="58" x2="80" y2="50" stroke="#ffffff" stroke-width="1.5" opacity="0.7"/>
+  <line x1="64" y1="58" x2="54" y2="68" stroke="#ffffff" stroke-width="1.5" opacity="0.7"/>
+  <line x1="64" y1="58" x2="74" y2="68" stroke="#ffffff" stroke-width="1.5" opacity="0.7"/>
+
+  <!-- Mount arrow indicator -->
+  <path d="M 44,82 L 56,82 L 56,76 L 72,86 L 56,96 L 56,90 L 44,90 Z"
+        fill="#33d17a" stroke="#26a269" stroke-width="1.5" stroke-linejoin="round"/>
+</svg>

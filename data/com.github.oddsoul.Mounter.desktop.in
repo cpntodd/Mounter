@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Mounter
+Comment=Mount SMB/CIFS network shares
+Exec=@bindir@/mounter
+Icon=com.github.oddsoul.Mounter
+Categories=Network;FileTools;GTK;
+Keywords=smb;cifs;samba;mount;network;share;nas;
+Terminal=false
+StartupNotify=true

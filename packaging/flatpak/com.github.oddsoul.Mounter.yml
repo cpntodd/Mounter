@@ -1,0 +1,27 @@
+app-id: com.github.oddsoul.Mounter
+runtime: org.gnome.Platform
+runtime-version: "47"
+sdk: org.gnome.Sdk
+command: mounter
+finish-args:
+  # Network access for SMB discovery and mounting
+  - --share=network
+  # Access to /proc/mounts for monitoring active mounts (read-only)
+  - --filesystem=/proc/mounts:ro
+  # D-Bus access for polkit and secret service
+  - --socket=session-bus
+  - --socket=system-bus
+  # Allow talking to polkit daemon
+  - --system-talk-name=org.freedesktop.PolicyKit1
+  # Allow talking to secret service (GNOME Keyring)
+  - --talk-name=org.freedesktop.secrets
+
+modules:
+  - name: mounter
+    buildsystem: meson
+    config-opts:
+      - -Dprefix=/app
+      - -Dlibexecdir=/app/libexec
+    sources:
+      - type: dir
+        path: ../../

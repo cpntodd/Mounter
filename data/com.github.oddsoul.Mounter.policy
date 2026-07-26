@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC
+  "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+  "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+
+<!--
+  Polkit policy for Mounter privileged operations.
+
+  Actions defined here control whether the user is prompted for a password
+  when performing mount/umount/systemd operations via pkexec.
+
+  Default: auth_self_keep — authenticate once per session, then remembered.
+  For users in the 'sudo' group, the admin identity can be set to allow
+  passwordless operation if desired.
+
+  To allow passwordless operation for sudo group members, install a
+  polkit local authority rule, e.g.:
+
+    /etc/polkit-1/rules.d/50-mounter.rules:
+    polkit.addRule(function(action, subject) {
+        if (action.id.startsWith("com.github.oddsoul.Mounter.") &&
+            subject.isInGroup("sudo")) {
+            return polkit.Result.YES;
+        }
+    });
+-->
+
+<policyconfig>
+  <vendor>Mounter Project</vendor>
+  <vendor_url>https://github.com/oddsoul/mounter</vendor_url>
+
+  <action id="com.github.oddsoul.Mounter.mount-share">
+    <description>Mount an SMB/CIFS network share</description>
+    <message>Authentication is required to mount an SMB share</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_self_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/mounter/mounter-helper</annotate>
+  </action>
+
+  <action id="com.github.oddsoul.Mounter.umount-share">
+    <description>Unmount an SMB/CIFS network share</description>
+    <message>Authentication is required to unmount an SMB share</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_self_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/mounter/mounter-helper</annotate>
+  </action>
+
+  <action id="com.github.oddsoul.Mounter.manage-systemd">
+    <description>Manage systemd mount units for persistent shares</description>
+    <message>Authentication is required to manage systemd mount units</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_self_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/mounter/mounter-helper</annotate>
+  </action>
+
+  <action id="com.github.oddsoul.Mounter.write-credentials">
+    <description>Write SMB credentials file to system directory</description>
+    <message>Authentication is required to store SMB credentials</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_self_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/mounter/mounter-helper</annotate>
+  </action>
+</policyconfig>

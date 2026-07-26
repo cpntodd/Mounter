@@ -1,0 +1,45 @@
+Source: mounter
+Section: net
+Priority: optional
+Maintainer: Oddsoul <oddsoul@example.com>
+Build-Depends:
+ debhelper-compat (= 13),
+ meson (>= 1.0),
+ libgtkmm-4.0-dev (>= 4.14),
+ libsecret-1-dev,
+ libpolkit-gobject-1-dev,
+ nlohmann-json3-dev | libnlohmann-json-dev,
+ libadwaita-1-dev (>= 1.5),
+Standards-Version: 4.7.0
+Homepage: https://github.com/oddsoul/mounter
+Vcs-Browser: https://github.com/oddsoul/mounter
+Vcs-Git: https://github.com/oddsoul/mounter.git
+Rules-Requires-Root: no
+
+Package: mounter
+Architecture: linux-any
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+ cifs-utils,
+ polkitd,
+ pkexec,
+Recommends:
+ smbclient,
+ nmap,
+ libsecret-tools,
+Suggests:
+ samba-common-bin,
+Description: GUI tool for mounting SMB/CIFS network shares
+ Mounter provides a simple graphical interface for mounting SMB/CIFS
+ network shares on Linux. It supports network discovery, manual mount
+ configuration, credential management via the system keyring, and
+ persistent mounts through systemd automount units.
+ .
+ Features:
+  * Network discovery — scan for SMB hosts and browse available shares
+  * Manual mount — enter server, share, and credentials directly
+  * Active mount management — view and unmount connected shares
+  * Persistent mounts — generate systemd .mount/.automount units
+  * Credential storage — secure storage via libsecret (GNOME Keyring)
+  * Diagnostics — check for required system dependencies

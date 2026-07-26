@@ -1,0 +1,42 @@
+# .gitignore — Mounter
+
+# Build artifacts
+build/
+builddir/
+_build/
+meson-logs/
+*.o
+*.lo
+*.la
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Packaging
+*.deb
+*.dsc
+*.tar.xz
+*.tar.gz
+/*.build
+/*.buildinfo
+/*.changes
+debian/files
+debian/.debhelper/
+debian/mounter/
+debian/mounter-dbg/
+debian/*.log
+debian/*.substvars
+debian/tmp/
+
+# Flatpak
+.flatpak-builder/
+build-dir/
+repo/
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,6 @@
+usr/bin/mounter
+usr/libexec/mounter/mounter-helper
+usr/share/applications/com.github.oddsoul.Mounter.desktop
+usr/share/icons/hicolor/scalable/apps/com.github.oddsoul.Mounter.svg
+usr/share/metainfo/com.github.oddsoul.Mounter.metainfo.xml
+usr/share/polkit-1/actions/com.github.oddsoul.Mounter.policy

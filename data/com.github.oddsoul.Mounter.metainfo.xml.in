@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.github.oddsoul.Mounter</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>Mounter</name>
+  <summary>Mount SMB/CIFS network shares with a graphical interface</summary>
+
+  <description>
+    <p>
+      Mounter provides a simple, desktop-environment-agnostic GUI for
+      mounting SMB/CIFS network shares on Linux. It supports network
+      discovery, credential management via the system keyring, and
+      persistent mounts through systemd automount units.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>Network discovery — scan for SMB hosts and browse available shares</li>
+      <li>Manual mount — enter server, share, and credentials directly</li>
+      <li>Active mount management — view and unmount connected shares</li>
+      <li>Persistent mounts — generate systemd .mount/.automount units</li>
+      <li>Profile saving — save connection details for quick re-mounting</li>
+      <li>Credential storage — secure storage via libsecret (GNOME Keyring)</li>
+      <li>Diagnostics — check for required system dependencies</li>
+    </ul>
+  </description>
+
+  <screenshots>
+    <screenshot type="default">
+      <caption>Main window with manual mount form</caption>
+    </screenshot>
+  </screenshots>
+
+  <releases>
+    <release version="@version@" date="2026-07-26">
+      <description>
+        <p>Initial release.</p>
+      </description>
+    </release>
+  </releases>
+
+  <url type="homepage">https://github.com/oddsoul/mounter</url>
+  <url type="bugtracker">https://github.com/oddsoul/mounter/issues</url>
+
+  <developer id="com.github.oddsoul">
+    <name>Oddsoul</name>
+  </developer>
+
+  <launchable type="desktop-id">com.github.oddsoul.Mounter.desktop</launchable>
+
+  <requires>
+    <display_length compare="ge">360</display_length>
+  </requires>
+
+  <recommends>
+    <binary>mount.cifs</binary>
+    <binary>pkexec</binary>
+    <binary>smbclient</binary>
+    <binary>nmap</binary>
+  </recommends>
+
+  <custom>
+    <value key="Purism::form_factor">workstation</value>
+  </custom>
+</component>
