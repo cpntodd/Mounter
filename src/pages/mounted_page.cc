@@ -13,11 +13,9 @@ MountedPage::MountedPage(Window& window)
 {
   build_ui();
 
-  // Connect to mount monitor
   window_.mount_monitor().signal_mounts_changed().connect(
     sigc::mem_fun(*this, &MountedPage::on_mounts_changed));
 
-  // Show initial state
   on_mounts_changed(window_.mount_monitor().active_mounts());
 }
 
@@ -48,17 +46,14 @@ void MountedPage::build_ui()
 
 void MountedPage::on_mounts_changed(const std::vector<MountInfo>& mounts)
 {
-  // Clear existing rows
   while (auto* child = listbox_.get_first_child()) {
     listbox_.remove(*child);
   }
 
-  // Update heading with count
   auto count = mounts.size();
   heading_.set_text("Mounted Shares (" + std::to_string(count) + ")");
 
   if (mounts.empty()) {
-    // Show placeholder
     if (placeholder_.get_parent() == nullptr) {
       content_.prepend(placeholder_);
     }
@@ -66,13 +61,11 @@ void MountedPage::on_mounts_changed(const std::vector<MountInfo>& mounts)
     return;
   }
 
-  // Hide placeholder
   if (placeholder_.get_parent() != nullptr) {
     content_.remove(placeholder_);
   }
   scrolled_.set_visible(true);
 
-  // Add a row for each active mount
   for (const auto& m : mounts) {
     auto row = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL, 12);
     row->set_margin_start(8);
@@ -80,7 +73,6 @@ void MountedPage::on_mounts_changed(const std::vector<MountInfo>& mounts)
     row->set_margin_top(4);
     row->set_margin_bottom(4);
 
-    // Share info (left side)
     auto info_box = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL, 2);
     info_box->set_hexpand(true);
 
@@ -90,26 +82,24 @@ void MountedPage::on_mounts_changed(const std::vector<MountInfo>& mounts)
     share_label->get_style_context()->add_class("heading");
 
     auto mount_label = Gtk::make_managed<Gtk::Label>(
-      "\342\206\222 " + m.mount_point);  // → arrow
+      "\342\206\222 " + m.mount_point);
     mount_label->set_halign(Gtk::Align::START);
     mount_label->set_opacity(0.7);
 
     info_box->append(*share_label);
     info_box->append(*mount_label);
 
-    // Unmount button (right side)
     auto unmount_btn = Gtk::make_managed<Gtk::Button>("Unmount");
     unmount_btn->set_valign(Gtk::Align::CENTER);
     unmount_btn->get_style_context()->add_class("destructive-action");
 
-    auto mount_point = m.mount_point; // capture by value
+    auto mount_point = m.mount_point;
     unmount_btn->signal_clicked().connect([this, mount_point]() {
       unmount_share(mount_point);
     });
 
     row->append(*info_box);
     row->append(*unmount_btn);
-
     listbox_.append(*row);
   }
 }

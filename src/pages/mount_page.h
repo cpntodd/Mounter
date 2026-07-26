@@ -3,7 +3,6 @@
 #pragma once
 
 #include <gtkmm.h>
-#include <memory>
 
 namespace Mounter {
 
@@ -18,8 +17,6 @@ public:
 private:
   void build_ui();
   void on_mount_clicked();
-  void fill_from_saved_credentials(const std::string& server,
-                                   const std::string& share);
 
   Window&       window_;
 

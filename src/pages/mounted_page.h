@@ -1,9 +1,8 @@
-/* mounted_page.h — Active mounts list with unmount capability */
+/* mounted_page.h — Active mounts list with unmount */
 
 #pragma once
 
 #include <gtkmm.h>
-#include <memory>
 #include <vector>
 
 namespace Mounter {
@@ -26,8 +25,8 @@ private:
   Gtk::Label    heading_{"Mounted Shares"};
   Gtk::ListBox  listbox_;
   Gtk::Label    placeholder_{"No SMB shares currently mounted."};
-  Gtk::Box      content_{Gtk::Orientation::VERTICAL};
   Gtk::ScrolledWindow scrolled_;
+  Gtk::Box      content_{Gtk::Orientation::VERTICAL};
 };
 
 } // namespace Mounter

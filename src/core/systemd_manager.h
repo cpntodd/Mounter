@@ -1,12 +1,9 @@
-/* systemd_manager.h — systemd .mount/.automount unit management
- *
- * Generates, enables, and disables systemd mount and automount units
- * for persistent SMB shares.
- */
+/* systemd_manager.h — systemd .mount/.automount unit management */
 
 #pragma once
 
 #include <string>
+#include <functional>
 
 namespace Mounter {
 
@@ -19,23 +16,25 @@ struct SystemdMountConfig {
   std::string extra_options;
 };
 
+using SystemdCallback = std::function<void(bool success, const std::string& error)>;
+
 class SystemdManager
 {
 public:
   SystemdManager() = default;
 
-  /// Create and enable a .mount + .automount unit pair.
-  /// Returns true on success.
-  bool create_and_enable(const SystemdMountConfig& config);
-
-  /// Disable and remove units for a given mount point.
-  bool disable_and_remove(const std::string& mount_point);
+  /// Create and enable a .mount + .automount unit pair via mounter-helper.
+  void create_and_enable_async(const SystemdMountConfig& config,
+                               SystemdCallback callback);
 
   /// Generate the unit file content for a .mount unit.
   static std::string generate_mount_unit(const SystemdMountConfig& config);
 
   /// Generate the unit file content for a .automount unit.
   static std::string generate_automount_unit(const SystemdMountConfig& config);
+
+  /// Escape a filesystem path for systemd unit naming.
+  static std::string escape_path(const std::string& path);
 };
 
 } // namespace Mounter

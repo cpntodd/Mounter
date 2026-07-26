@@ -39,10 +39,10 @@ Window::~Window() = default;
 void Window::build_ui()
 {
   // ── Create pages (pass core services where needed) ────────
-  discovery_page_   = std::make_unique<DiscoveryPage>();
+  discovery_page_   = std::make_unique<DiscoveryPage>(*this);
   mount_page_       = std::make_unique<MountPage>(*this);
   mounted_page_     = std::make_unique<MountedPage>(*this);
-  profiles_page_    = std::make_unique<ProfilesPage>();
+  profiles_page_    = std::make_unique<ProfilesPage>(*this);
   diagnostics_page_ = std::make_unique<DiagnosticsPage>();
 
   // ── Stack ─────────────────────────────────────────────────
