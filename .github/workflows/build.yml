@@ -1,0 +1,89 @@
+name: Build and Package
+
+on:
+  push:
+    branches: [master]
+    tags: ['v*']
+  pull_request:
+    branches: [master]
+
+jobs:
+  build-deb:
+    name: Build .deb (Debian 13)
+    runs-on: ubuntu-latest
+    container:
+      image: debian:trixie-slim
+    steps:
+      - name: Install build dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            build-essential \
+            meson \
+            ninja-build \
+            pkgconf \
+            libgtkmm-4.0-dev \
+            libsecret-1-dev \
+            libpolkit-gobject-1-dev \
+            nlohmann-json3-dev \
+            libadwaita-1-dev \
+            devscripts \
+            debhelper-compat
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build .deb package
+        run: |
+          ln -sf packaging/debian debian
+          mkdir -p debian/source
+          echo "3.0 (native)" > debian/source/format
+          dpkg-buildpackage -us -uc -b
+          mkdir -p artifacts
+          cp ../mounter_*.deb artifacts/
+          cp ../mounter-dbgsym_*.deb artifacts/ || true
+
+      - name: Upload .deb artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mounter-deb
+          path: artifacts/
+
+  build-flatpak:
+    name: Build Flatpak
+    runs-on: ubuntu-latest
+    container:
+      image: bilelmoussaoui/flatpak-github-actions:gnome-47
+      options: --privileged
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Flatpak
+        uses: bilelmoussaoui/flatpak-github-actions/flatpak-builder@v6
+        with:
+          bundle: mounter.flatpak
+          manifest-path: packaging/flatpak/com.github.oddsoul.Mounter.yml
+          cache-key: flatpak-builder-${{ github.sha }}
+
+  # Placeholder for apt-repo deployment on release
+  # deploy-apt:
+  #   name: Deploy APT repository
+  #   if: startsWith(github.ref, 'refs/tags/v')
+  #   needs: build-deb
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Download .deb artifact
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: mounter-deb
+  #     - name: Setup reprepro
+  #       run: |
+  #         sudo apt-get install -y reprepro
+  #         # ... setup repo structure and add .deb
+  #     - name: Deploy to GitHub Pages
+  #       uses: peaceiris/actions-gh-pages@v3
+  #       with:
+  #         github_token: ${{ secrets.GITHUB_TOKEN }}
+  #         publish_dir: ./repo
+  #         publish_branch: apt-repo
