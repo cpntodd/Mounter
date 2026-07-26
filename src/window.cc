@@ -180,22 +180,26 @@ void Window::switch_to_tab(const std::string& name)
 
 void Window::show_about_dialog()
 {
-  auto about = Gtk::AboutDialog{};
-  about.set_transient_for(*this);
-  about.set_program_name("Mounter");
-  about.set_version("0.1.0");
-  about.set_comments(
+  auto about = new Gtk::AboutDialog();
+  about->set_transient_for(*this);
+  about->set_program_name("Mounter");
+  about->set_version("0.1.0");
+  about->set_comments(
     "A GUI tool for mounting SMB/CIFS network shares on Linux.\n\n"
     "Developer: github.com/cpntodd\n\n"
     "Tech stack: C++17 · gtkmm-4.0 · GTK4 · libsecret · polkit\n"
     "Meson · Cairo · nlohmann/json");
-  about.set_license_type(Gtk::License::GPL_3_0);
-  about.set_website("https://github.com/cpntodd/Mounter");
-  about.set_website_label("GitHub Repository");
-  about.set_copyright("\302\251 2026 cpntodd");
-  about.set_logo_icon_name("com.github.oddsoul.Mounter");
+  about->set_license_type(Gtk::License::GPL_3_0);
+  about->set_website("https://github.com/cpntodd/Mounter");
+  about->set_website_label("GitHub Repository");
+  about->set_copyright("\302\251 2026 cpntodd");
+  about->set_logo_icon_name("com.github.oddsoul.Mounter");
 
-  about.present();
+  // Self-delete when closed
+  about->signal_response().connect([about](int) { delete about; });
+
+  about->set_visible(true);
+  about->present();
 }
 
 } // namespace Mounter
