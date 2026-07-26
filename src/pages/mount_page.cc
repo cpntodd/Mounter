@@ -39,7 +39,7 @@ void MountPage::prefill_from_discovery(const std::string& server,
   domain_entry_.set_text("WORKGROUP");
 
   // Reset mount point to default
-  mountpoint_entry_.set_text("/mnt/");
+  mountpoint_entry_.set_text("/media/");
 
   // Try to auto-fill credentials from stored keyring
   try_fill_credentials();
@@ -90,14 +90,14 @@ void MountPage::build_ui()
   password_entry_.set_width_chars(35);
   domain_entry_.set_placeholder_text("WORKGROUP");
   domain_entry_.set_width_chars(35);
-  mountpoint_entry_.set_placeholder_text("/mnt/share-name");
-  mountpoint_entry_.set_text("/mnt/");
+  mountpoint_entry_.set_placeholder_text("/media/share-name");
+  mountpoint_entry_.set_text("/media/");
   mountpoint_entry_.set_width_chars(35);
 
   share_entry_.signal_changed().connect([this]() {
     auto share = share_entry_.get_text();
-    if (!share.empty() && mountpoint_entry_.get_text() == "/mnt/") {
-      mountpoint_entry_.set_text("/mnt/" + share);
+    if (!share.empty() && mountpoint_entry_.get_text() == "/media/") {
+      mountpoint_entry_.set_text("/media/" + share);
     }
     try_fill_credentials();
   });
