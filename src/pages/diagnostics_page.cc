@@ -1,15 +1,30 @@
-/* diagnostics_page.cc */
+/* diagnostics_page.cc — System dependency checks + auto-install */
 
 #include "diagnostics_page.h"
 #include "i18n.h"
+#include <giomm/subprocess.h>
 #include <cstdlib>
+#include <sstream>
+#include <thread>
 
 namespace Mounter {
 
 DiagnosticsPage::DiagnosticsPage()
   : Gtk::Box{Gtk::Orientation::VERTICAL}
 {
+  // Define all checks with their Debian package mappings
+  checks_ = {
+    {"cifs-utils (mount.cifs)", "mount.cifs", "cifs-utils",       true},
+    {"pkexec (polkit)",         "pkexec",     "pkexec",            true},
+    {"smbclient (share list)",  "smbclient",  "smbclient",         true},
+    {"nmap (network scan)",     "nmap",       "nmap",              true},
+    {"systemctl (systemd)",     "systemctl",  "systemd",           true},
+    {"secret-tool (keyring)",   "secret-tool","libsecret-tools",   false},
+    {"nmblookup (NetBIOS)",     "nmblookup",  "samba-common-bin",  false},
+  };
+
   build_ui();
+  run_checks();
 }
 
 void DiagnosticsPage::build_ui()
@@ -21,13 +36,23 @@ void DiagnosticsPage::build_ui()
   heading_.get_style_context()->add_class("title-1");
 
   check_button_.set_halign(Gtk::Align::START);
-  check_button_.signal_clicked().connect(sigc::mem_fun(*this, &DiagnosticsPage::run_checks));
+  check_button_.signal_clicked().connect(
+    sigc::mem_fun(*this, &DiagnosticsPage::run_checks));
+
+  install_button_.set_halign(Gtk::Align::START);
+  install_button_.set_sensitive(false);  // disabled until checks run
+  install_button_.signal_clicked().connect(
+    sigc::mem_fun(*this, &DiagnosticsPage::install_missing));
+
+  button_row_.append(check_button_);
+  button_row_.append(install_button_);
+  button_row_.append(spinner_);
 
   results_.set_spacing(4);
   results_.set_margin_top(8);
 
   content_.set_spacing(8);
-  content_.append(check_button_);
+  content_.append(button_row_);
   content_.append(results_);
 
   append(heading_);
@@ -41,42 +66,88 @@ void DiagnosticsPage::run_checks()
     results_.remove(*child);
   }
 
-  struct CheckItem {
-    const char* name;
-    const char* binary;
-    bool required;
-  };
+  bool any_missing = false;
 
-  const CheckItem checks[] = {
-    {"cifs-utils (mount.cifs)", "mount.cifs", true},
-    {"pkexec (polkit)",         "pkexec",     true},
-    {"smbclient (share list)",  "smbclient",  true},
-    {"nmap (network scan)",     "nmap",       true},
-    {"systemctl (systemd)",     "systemctl",  true},
-    {"secret-tool (keyring)",   "secret-tool",false},
-    {"nmblookup (NetBIOS)",     "nmblookup",  false},
-  };
-
-  for (const auto& check : checks) {
-    // Use 'which' to check if the binary exists in PATH
+  for (auto& check : checks_) {
     std::string cmd = std::string{"which "} + check.binary + " > /dev/null 2>&1";
     int ret = std::system(cmd.c_str());
-    bool found = (ret == 0);
+    check.found = (ret == 0);
+    if (!check.found) any_missing = true;
 
     auto row = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL, 8);
 
-    auto icon = Gtk::make_managed<Gtk::Label>(found ? "✅" : "❌");
+    auto icon = Gtk::make_managed<Gtk::Label>(check.found ? "✅" : "❌");
     icon->set_width_chars(2);
 
     auto label = Gtk::make_managed<Gtk::Label>(
-      std::string{check.name} + (check.required ? " (required)" : " (optional)"));
+      check.name + (check.required ? " (required)" : " (optional)"));
     label->set_halign(Gtk::Align::START);
-    label->set_opacity(found ? 1.0 : 0.7);
+    label->set_opacity(check.found ? 1.0 : 0.7);
 
     row->append(*icon);
     row->append(*label);
     results_.append(*row);
   }
+
+  install_button_.set_sensitive(any_missing);
+}
+
+void DiagnosticsPage::install_missing()
+{
+  // Collect missing package names
+  std::vector<std::string> missing_pkgs;
+  for (const auto& check : checks_) {
+    if (!check.found && !check.pkg.empty()) {
+      // Avoid duplicates (e.g., smbclient and samba-common-bin overlap)
+      bool dup = false;
+      for (const auto& p : missing_pkgs) {
+        if (p == check.pkg) { dup = true; break; }
+      }
+      if (!dup) missing_pkgs.push_back(check.pkg);
+    }
+  }
+
+  if (missing_pkgs.empty()) {
+    return;
+  }
+
+  // Build install command
+  std::ostringstream cmd;
+  cmd << "apt-get install -y";
+  for (const auto& pkg : missing_pkgs) {
+    cmd << " " << pkg;
+  }
+
+  // UI feedback
+  install_button_.set_sensitive(false);
+  check_button_.set_sensitive(false);
+  spinner_.start();
+
+  // Run in background thread so GUI stays responsive
+  std::thread([this, cmd_str = cmd.str()]() {
+    try {
+      auto proc = Gio::Subprocess::create(
+        std::vector<std::string>{"pkexec", "sh", "-c", cmd_str},
+        Gio::Subprocess::Flags::STDOUT_SILENCE |
+        Gio::Subprocess::Flags::STDERR_SILENCE);
+      proc->wait();
+
+      // Re-run checks on main thread
+      Glib::signal_idle().connect_once([this]() {
+        spinner_.stop();
+        install_button_.set_sensitive(false);
+        check_button_.set_sensitive(true);
+        run_checks();
+      });
+
+    } catch (const Glib::Error&) {
+      Glib::signal_idle().connect_once([this]() {
+        spinner_.stop();
+        install_button_.set_sensitive(true);
+        check_button_.set_sensitive(true);
+      });
+    }
+  }).detach();
 }
 
 } // namespace Mounter
