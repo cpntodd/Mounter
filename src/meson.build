@@ -28,9 +28,13 @@ if libadwaita_dep.found()
   mounter_deps += libadwaita_dep
 endif
 
+# Pass the helper install path at compile time
+helper_path_def = '-DHELPER_PATH="' + helperdir + '/mounter-helper"'
+
 executable('mounter',
   mounter_sources,
   dependencies: mounter_deps,
+  cpp_args: [helper_path_def],
   install: true,
   install_dir: bindir,
 )
