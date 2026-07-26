@@ -201,12 +201,13 @@ int cmd_mount_full(const std::string& json)
     mount_unit << "[Unit]\n"
                << "Description=Mount SMB share: " << server << "/" << share << "\n"
                << "After=network-online.target\n"
-               << "Wants=network-online.target\n\n"
+               << "Wants=network-online.target\n"
+               << "Requires=network-online.target\n\n"
                << "[Mount]\n"
                << "What=//" << server << "/" << share << "\n"
                << "Where=" << mountpoint << "\n"
                << "Type=cifs\n"
-               << "Options=credentials=" << cred_path
+               << "Options=_netdev,credentials=" << cred_path
                << ",vers=" << version;
     if (!options.empty()) mount_unit << "," << options;
     mount_unit << "\nTimeoutSec=30\n\n"
@@ -216,22 +217,9 @@ int cmd_mount_full(const std::string& json)
     write_file("/etc/systemd/system/" + escaped + ".mount",
                mount_unit.str(), 0644);
 
-    // Write .automount unit
-    std::ostringstream am_unit;
-    am_unit << "[Unit]\n"
-            << "Description=Automount SMB share: " << server << "/" << share << "\n\n"
-            << "[Automount]\n"
-            << "Where=" << mountpoint << "\n"
-            << "TimeoutIdleSec=600\n\n"
-            << "[Install]\n"
-            << "WantedBy=multi-user.target\n";
-
-    write_file("/etc/systemd/system/" + escaped + ".automount",
-               am_unit.str(), 0644);
-
-    // Reload and enable
+    // Reload and enable the .mount unit to auto-mount at boot
     run_command_capture("systemctl daemon-reload");
-    run_command_capture("systemctl enable --now " + escaped + ".automount");
+    run_command_capture("systemctl enable " + escaped + ".mount");
   }
 
   std::cout << R"JSON({"success":true})JSON" << std::endl;
