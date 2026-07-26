@@ -14,10 +14,17 @@ public:
   explicit MountPage(Window& window);
   ~MountPage() override = default;
 
+  /// Pre-fill the form from network discovery data.
+  /// @param server   IP address or hostname of the SMB server
+  /// @param hostname Optional resolved hostname (for display, not used in mount)
+  void prefill_from_discovery(const std::string& server,
+                              const std::string& hostname);
+
 private:
   void build_ui();
   void on_mount_clicked();
   void try_fill_credentials();
+  bool validate_form();
 
   Window&       window_;
 

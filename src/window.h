@@ -34,6 +34,12 @@ public:
   MountOperation&   mount_operation()   { return *mount_operation_; }
   CredentialStore&  credential_store()  { return *credential_store_; }
 
+  // Expose pages for cross-tab coordination
+  MountPage&        mount_page()        { return *mount_page_; }
+
+  // Tab navigation
+  void switch_to_tab(const std::string& name);
+
   // Status bar
   void set_status(const std::string& text);
 

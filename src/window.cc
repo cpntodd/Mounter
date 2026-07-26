@@ -127,6 +127,11 @@ void Window::set_status(const std::string& text)
   statusbar_.push(text);
 }
 
+void Window::switch_to_tab(const std::string& name)
+{
+  stack_.set_visible_child(name);
+}
+
 void Window::show_about_dialog()
 {
   auto about = Gtk::AboutDialog{};

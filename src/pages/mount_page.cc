@@ -23,6 +23,57 @@ MountPage::MountPage(Window& window)
   build_ui();
 }
 
+void MountPage::prefill_from_discovery(const std::string& server,
+                                       const std::string& hostname)
+{
+  // Pre-fill server (use hostname for display if available, but IP for connection)
+  if (!hostname.empty()) {
+    // Show hostname as a hint, but put IP in the server field
+    server_entry_.set_text(server);
+    server_entry_.set_tooltip_text("Resolved hostname: " + hostname);
+  } else {
+    server_entry_.set_text(server);
+  }
+
+  // Clear share — user must enter it
+  share_entry_.set_text("");
+  share_entry_.set_tooltip_text("Enter the share name (e.g., home, media, public)");
+  share_entry_.grab_focus();
+
+  // Clear credentials (will be auto-filled from keyring if available)
+  username_entry_.set_text("");
+  password_entry_.set_text("");
+  domain_entry_.set_text("WORKGROUP");
+
+  // Reset mount point to default
+  mountpoint_entry_.set_text("/mnt/");
+
+  // Try to auto-fill credentials from stored keyring
+  try_fill_credentials();
+
+  // Switch to this tab
+  window_.switch_to_tab("mount-page");
+  window_.set_status("Server pre-filled from discovery. Enter share name and credentials, then click Mount.");
+}
+
+bool MountPage::validate_form()
+{
+  auto server = server_entry_.get_text();
+  auto share  = share_entry_.get_text();
+
+  if (server.empty()) {
+    window_.set_status("Error: Server is required.");
+    server_entry_.grab_focus();
+    return false;
+  }
+  if (share.empty()) {
+    window_.set_status("Error: Share name is required (e.g., home, media).");
+    share_entry_.grab_focus();
+    return false;
+  }
+  return true;
+}
+
 void MountPage::build_ui()
 {
   set_margin(12);
@@ -151,6 +202,8 @@ void MountPage::try_fill_credentials()
 
 void MountPage::on_mount_clicked()
 {
+  if (!validate_form()) return;
+
   MountParams params;
   params.server      = server_entry_.get_text();
   params.share       = share_entry_.get_text();
@@ -159,11 +212,6 @@ void MountPage::on_mount_clicked()
   params.domain      = domain_entry_.get_text();
   params.mount_point = mountpoint_entry_.get_text();
   params.persistent  = persist_check_.get_active();
-
-  if (params.server.empty() || params.share.empty() || params.mount_point.empty()) {
-    window_.set_status("Error: Server, Share, and Mount Point are required.");
-    return;
-  }
 
   auto selected = vers_dropdown_.get_selected();
   switch (selected) {

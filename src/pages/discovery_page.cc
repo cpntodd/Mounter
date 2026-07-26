@@ -2,6 +2,7 @@
 
 #include "discovery_page.h"
 #include "i18n.h"
+#include "mount_page.h"
 #include "../window.h"
 #include "../core/discovery_engine.h"
 #include "../core/mount_operation.h"
@@ -200,23 +201,22 @@ void DiscoveryPage::on_results(const std::vector<DiscoveredHost>& hosts)
         lock_icon->set_width_chars(2);
 
         auto auth_label = Gtk::make_managed<Gtk::Label>(
-          _("Authentication required — click to enter credentials"));
+          _("Authentication required"));
         auth_label->set_halign(Gtk::Align::START);
         auth_label->set_hexpand(true);
         auth_label->set_opacity(0.8);
 
-        auto cred_btn = Gtk::make_managed<Gtk::Button>(_("Enter Credentials"));
-        cred_btn->get_style_context()->add_class("suggested-action");
+        auto add_btn = Gtk::make_managed<Gtk::Button>(_("Add"));
+        add_btn->get_style_context()->add_class("suggested-action");
         auto server = host.ip_address;
-        cred_btn->signal_clicked().connect([this, server]() {
-          // Switch to manual mount tab with server pre-filled
-          window_.set_status(
-            "Switch to Manual Mount tab and enter credentials for " + server);
+        auto hname  = host.hostname;
+        add_btn->signal_clicked().connect([this, server, hname]() {
+          window_.mount_page().prefill_from_discovery(server, hname);
         });
 
         share_row->append(*lock_icon);
         share_row->append(*auth_label);
-        share_row->append(*cred_btn);
+        share_row->append(*add_btn);
         results_list_.append(*share_row);
         continue;
       }
