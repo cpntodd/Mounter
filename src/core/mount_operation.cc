@@ -96,6 +96,8 @@ std::string MountOperation::build_mount_json(const MountParams& params)
   j["smb_version"]  = params.smb_version;
   j["extra_options"] = params.extra_options;
   j["persistent"]   = params.persistent ? "true" : "false";
+  j["boot_mount"]   = params.boot_mount ? "true" : "false";
+  j["auto_mount"]   = params.auto_mount ? "true" : "false";
   return j.dump();
 }
 

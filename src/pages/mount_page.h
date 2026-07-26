@@ -45,7 +45,8 @@ private:
   Gtk::Label    vers_label_{"SMB Version:"};
   Gtk::DropDown vers_dropdown_;
   Gtk::Button   mount_button_{"Mount"};
-  Gtk::CheckButton persist_check_{"Make persistent (auto-mount at boot)"};
+  Gtk::CheckButton boot_check_{"Mount at boot (systemd)"};
+  Gtk::CheckButton automount_check_{"Auto-mount on access (lazy, unmounts when idle)"};
   Gtk::Spinner  spinner_;
   Gtk::Box      content_{Gtk::Orientation::VERTICAL};
 };

@@ -136,6 +136,8 @@ int cmd_mount_full(const std::string& json)
   auto version    = json_get_string(json, "smb_version");
   auto options    = json_get_string(json, "extra_options");
   auto persistent = json_get_string(json, "persistent");
+  auto boot_mount  = json_get_string(json, "boot_mount");
+  auto auto_mount  = json_get_string(json, "auto_mount");
 
   if (server.empty() || share.empty() || mountpoint.empty()) {
     std::cout << R"JSON({"success":false,"error":"Missing required fields (server, share, mount_point)"})JSON" << std::endl;
@@ -174,8 +176,11 @@ int cmd_mount_full(const std::string& json)
   }
 
   // Step 3: If persistent, write credentials and systemd units
-  if (persistent == "true" || persistent == "1") {
-    // Write credentials file
+  bool do_boot  = (persistent == "true" || persistent == "1" || boot_mount == "true");
+  bool do_auto  = (auto_mount == "true" || auto_mount == "1");
+
+  if (do_boot || do_auto) {
+    // Write credentials file (shared by both unit types)
     std::string cred_dir = "/etc/mounter/creds";
     ensure_directory(cred_dir, 0700);
     std::string cred_path = cred_dir + "/" + server + "-" + share + ".cred";
@@ -196,30 +201,50 @@ int cmd_mount_full(const std::string& json)
     }
     if (!escaped.empty() && escaped[0] == '-') escaped.erase(0, 1);
 
-    // Write .mount unit
-    std::ostringstream mount_unit;
-    mount_unit << "[Unit]\n"
-               << "Description=Mount SMB share: " << server << "/" << share << "\n"
-               << "After=network-online.target\n"
-               << "Wants=network-online.target\n"
-               << "Requires=network-online.target\n\n"
-               << "[Mount]\n"
-               << "What=//" << server << "/" << share << "\n"
-               << "Where=" << mountpoint << "\n"
-               << "Type=cifs\n"
-               << "Options=_netdev,credentials=" << cred_path
-               << ",vers=" << version;
-    if (!options.empty()) mount_unit << "," << options;
-    mount_unit << "\nTimeoutSec=30\n\n"
-               << "[Install]\n"
-               << "WantedBy=multi-user.target\n";
+    if (do_boot) {
+      // Write .mount unit for boot-time mounting
+      std::ostringstream mount_unit;
+      mount_unit << "[Unit]\n"
+                 << "Description=Mount SMB share: " << server << "/" << share << "\n"
+                 << "After=network-online.target\n"
+                 << "Wants=network-online.target\n"
+                 << "Requires=network-online.target\n\n"
+                 << "[Mount]\n"
+                 << "What=//" << server << "/" << share << "\n"
+                 << "Where=" << mountpoint << "\n"
+                 << "Type=cifs\n"
+                 << "Options=_netdev,credentials=" << cred_path
+                 << ",vers=" << version;
+      if (!options.empty()) mount_unit << "," << options;
+      mount_unit << "\nTimeoutSec=30\n\n"
+                 << "[Install]\n"
+                 << "WantedBy=multi-user.target\n";
 
-    write_file("/etc/systemd/system/" + escaped + ".mount",
-               mount_unit.str(), 0644);
+      write_file("/etc/systemd/system/" + escaped + ".mount",
+                 mount_unit.str(), 0644);
+    }
 
-    // Reload and enable the .mount unit to auto-mount at boot
+    if (do_auto) {
+      // Write .automount unit for on-access lazy mounting
+      std::ostringstream am_unit;
+      am_unit << "[Unit]\n"
+              << "Description=Automount SMB share: " << server << "/" << share << "\n\n"
+              << "[Automount]\n"
+              << "Where=" << mountpoint << "\n"
+              << "TimeoutIdleSec=600\n\n"
+              << "[Install]\n"
+              << "WantedBy=multi-user.target\n";
+
+      write_file("/etc/systemd/system/" + escaped + ".automount",
+                 am_unit.str(), 0644);
+    }
+
+    // Reload and enable the appropriate unit
     run_command_capture("systemctl daemon-reload");
-    run_command_capture("systemctl enable " + escaped + ".mount");
+    if (do_auto)
+      run_command_capture("systemctl enable --now " + escaped + ".automount");
+    else if (do_boot)
+      run_command_capture("systemctl enable " + escaped + ".mount");
   }
 
   std::cout << R"JSON({"success":true})JSON" << std::endl;

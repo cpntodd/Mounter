@@ -158,7 +158,11 @@ void MountPage::build_ui()
   mount_button_.signal_clicked().connect(
     sigc::mem_fun(*this, &MountPage::on_mount_clicked));
 
-  persist_check_.set_active(true);
+  boot_check_.set_active(true);
+  boot_check_.set_tooltip_text("Creates a systemd .mount unit to mount at system boot");
+
+  automount_check_.set_active(false);
+  automount_check_.set_tooltip_text("Creates a systemd .automount unit — mounts lazily on first access and unmounts after 10 min idle");
 
   auto action_row = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::HORIZONTAL, 12);
   action_row->append(mount_button_);
@@ -167,7 +171,8 @@ void MountPage::build_ui()
 
   content_.set_spacing(8);
   content_.append(form_);
-  content_.append(persist_check_);
+  content_.append(boot_check_);
+  content_.append(automount_check_);
   content_.append(*action_row);
 
   append(heading_);
@@ -204,7 +209,9 @@ void MountPage::on_mount_clicked()
   params.password    = password_entry_.get_text();
   params.domain      = domain_entry_.get_text();
   params.mount_point = mountpoint_entry_.get_text();
-  params.persistent  = persist_check_.get_active();
+  params.persistent  = boot_check_.get_active() || automount_check_.get_active();
+  params.boot_mount  = boot_check_.get_active();
+  params.auto_mount  = automount_check_.get_active();
 
   // Check if this share or mount point is already mounted
   for (const auto& m : window_.mount_monitor().active_mounts()) {

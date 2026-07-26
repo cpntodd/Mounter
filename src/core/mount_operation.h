@@ -26,6 +26,8 @@ struct MountParams {
   std::string smb_version = "3.1.1";
   std::string extra_options;
   bool        persistent = false;
+  bool        boot_mount = false;   // mount at system boot
+  bool        auto_mount = false;   // lazy mount on access, unmount when idle
 };
 
 struct MountResult {
