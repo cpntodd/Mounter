@@ -141,6 +141,29 @@ MountResult MountOperation::execute_helper(const std::string& command,
         if (!result.success) {
           result.error_message = response.value("error",
             std::string{"Unknown error from helper"});
+
+          // Translate common mount errors into user-friendly hints
+          auto& msg = result.error_message;
+          if (msg.find("error(2)") != std::string::npos ||
+              msg.find("error(6)") != std::string::npos) {
+            msg += "\n(Hint: The share name may not exist on the server. "
+                   "Verify the share name is correct.)";
+          } else if (msg.find("error(13)") != std::string::npos) {
+            msg += "\n(Hint: Access denied. Check your username/password, "
+                   "or the server may not allow SMB guest access.)";
+          } else if (msg.find("error(113)") != std::string::npos) {
+            msg += "\n(Hint: No route to host. Verify the server IP address "
+                   "and that it is powered on and reachable.)";
+          } else if (msg.find("error(115)") != std::string::npos) {
+            msg += "\n(Hint: Connection timed out. The server may be "
+                   "firewalled or not running SMB.)";
+          } else if (msg.find("error(112)") != std::string::npos) {
+            msg += "\n(Hint: Host is down. The server is not responding "
+                   "on the network.)";
+          } else if (msg.find("error(79)") != std::string::npos) {
+            msg += "\n(Hint: The kernel CIFS module may need additional "
+                   "modules loaded (try: sudo modprobe cifs nls_utf8).)";
+          }
         }
       } catch (const nlohmann::json::exception& e) {
         result.success = false;
