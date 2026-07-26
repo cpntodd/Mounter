@@ -5,6 +5,7 @@
 #include "../window.h"
 #include "../core/mount_operation.h"
 #include "../core/credential_store.h"
+#include "../core/mount_monitor.h"
 
 namespace Mounter {
 
@@ -204,6 +205,18 @@ void MountPage::on_mount_clicked()
   params.domain      = domain_entry_.get_text();
   params.mount_point = mountpoint_entry_.get_text();
   params.persistent  = persist_check_.get_active();
+
+  // Check if this share or mount point is already mounted
+  for (const auto& m : window_.mount_monitor().active_mounts()) {
+    if (m.mount_point == params.mount_point ||
+        (m.server == params.server && m.share == params.share)) {
+      window_.set_status(
+        "Already mounted: //" + m.server + "/" + m.share +
+        " → " + m.mount_point + ". Switching to Mounted tab.");
+      window_.switch_to_tab("mounted-page");
+      return;
+    }
+  }
 
   auto selected = vers_dropdown_.get_selected();
   switch (selected) {
