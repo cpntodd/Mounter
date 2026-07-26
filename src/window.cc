@@ -107,12 +107,54 @@ void Window::build_ui()
   stack_.add(*profiles_page_,    "profiles-page",   "Profiles");
   stack_.add(*diagnostics_page_, "diagnostics-page", _("Diagnostics"));
 
-  // ── Sidebar ───────────────────────────────────────────────
-  sidebar_.set_stack(stack_);
-  sidebar_.set_size_request(180, -1);
+  // ── Custom sidebar: ListBox + About button ─────────────────
+  sidebar_list_.set_size_request(160, -1);
+  sidebar_list_.get_style_context()->add_class("navigation-sidebar");
+
+  // Populate sidebar from stack pages
+  // The stack's pages are indexed; we recreate the list to match
+  struct PageInfo { std::string name; std::string title; };
+  std::vector<PageInfo> pages = {
+    {"dashboard-page",  "Dashboard"},
+    {"discover-page",   "Discover"},
+    {"mount-page",      _("Manual Mount")},
+    {"mounted-page",    "Mounted"},
+    {"profiles-page",   "Profiles"},
+    {"diagnostics-page", _("Diagnostics")},
+  };
+
+  for (const auto& p : pages) {
+    auto row = Gtk::make_managed<Gtk::Label>(p.title);
+    row->set_halign(Gtk::Align::START);
+    row->set_margin_start(12);
+    row->set_margin_top(8);
+    row->set_margin_bottom(8);
+
+    sidebar_list_.append(*row);
+  }
+
+  sidebar_list_.signal_row_activated().connect([this, pages](Gtk::ListBoxRow* row) {
+    auto idx = row->get_index();
+    if (idx >= 0 && static_cast<size_t>(idx) < pages.size()) {
+      stack_.set_visible_child(pages[idx].name);
+    }
+  });
+
+  // About button at bottom of sidebar
+  about_button_.set_margin_start(8);
+  about_button_.set_margin_end(8);
+  about_button_.set_margin_bottom(8);
+  about_button_.set_valign(Gtk::Align::END);
+  about_button_.set_vexpand(true);
+  about_button_.signal_clicked().connect([this]() {
+    show_about_dialog();
+  });
+
+  sidebar_box_.append(sidebar_list_);
+  sidebar_box_.append(about_button_);
 
   // ── Assemble ──────────────────────────────────────────────
-  main_box_.append(sidebar_);
+  main_box_.append(sidebar_box_);
   main_box_.append(stack_);
 
   statusbar_.set_margin_start(6);
@@ -142,9 +184,14 @@ void Window::show_about_dialog()
   about.set_transient_for(*this);
   about.set_program_name("Mounter");
   about.set_version("0.1.0");
-  about.set_comments("A GUI tool for mounting SMB/CIFS network shares");
+  about.set_comments(
+    "A GUI tool for mounting SMB/CIFS network shares on Linux.\n\n"
+    "Developer: github.com/cpntodd\n\n"
+    "Tech stack: C++17 · gtkmm-4.0 · GTK4 · libsecret · polkit\n"
+    "Meson · Cairo · nlohmann/json");
   about.set_license_type(Gtk::License::GPL_3_0);
   about.set_website("https://github.com/cpntodd/Mounter");
+  about.set_website_label("GitHub Repository");
   about.set_copyright("\302\251 2026 cpntodd");
   about.set_logo_icon_name("com.github.oddsoul.Mounter");
 

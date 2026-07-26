@@ -65,7 +65,9 @@ private:
 
   // Layout
   Gtk::Stack        stack_;
-  Gtk::StackSidebar sidebar_;
+  Gtk::Box          sidebar_box_{Gtk::Orientation::VERTICAL};
+  Gtk::ListBox      sidebar_list_;
+  Gtk::Button       about_button_{"About"};
   Gtk::Box          main_box_{Gtk::Orientation::HORIZONTAL};
   Gtk::Statusbar    statusbar_;
   Gtk::Box          root_box_{Gtk::Orientation::VERTICAL};
