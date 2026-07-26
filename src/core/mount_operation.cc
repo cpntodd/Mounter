@@ -152,6 +152,9 @@ MountResult MountOperation::execute_helper(const std::string& command,
           } else if (msg.find("error(13)") != std::string::npos) {
             msg += "\n(Hint: Access denied. Check your username/password, "
                    "or the server may not allow SMB guest access.)";
+          } else if (msg.find("error(16)") != std::string::npos) {
+            msg += "\n(Hint: This share is already mounted. "
+                   "Check the Mounted tab to manage it.)";
           } else if (msg.find("error(113)") != std::string::npos) {
             msg += "\n(Hint: No route to host. Verify the server IP address "
                    "and that it is powered on and reachable.)";
