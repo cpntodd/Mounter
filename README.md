@@ -64,7 +64,25 @@ Checks for all required and optional system dependencies. **Install** button aut
 
 ---
 
-## 📋 SPECS
+## � SCREENSHOTS
+
+<details>
+<summary>Click to expand — 9 screenshots</summary>
+
+| | | |
+|:---:|:---:|:---:|
+| ![Dashboard](screenshots/01-dashboard.png) | ![Discovery](screenshots/02-discovery-scanning.png) | ![Enumerating](screenshots/03-discovery-enumerating.png) |
+| *Dashboard* | *Network Scan* | *Share Enumeration* |
+| ![Results](screenshots/04-discovery-results.png) | ![Manual Mount](screenshots/05-manual-mount.png) | ![Mounted](screenshots/06-mounted-shares.png) |
+| *Discovery Results* | *Manual Mount Form* | *Mounted Shares* |
+| ![Profiles](screenshots/07-profiles.png) | ![Diagnostics](screenshots/08-diagnostics.png) | ![About](screenshots/09-about.png) |
+| *Saved Profiles* | *Diagnostics* | *About Dialog* |
+
+</details>
+
+---
+
+## �📋 SPECS
 
 | Category | Detail |
 |:----------|:--------|
