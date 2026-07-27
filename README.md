@@ -131,31 +131,31 @@ dpkg-buildpackage -us -uc -b
 
 ---
 
-## ARCHITECTURE
+## Architecture
 
 ```
-
- mounter (GUI) 
- 
- Dashboard Discover Mount Mounted 
- Page Page Page Page 
- 
- 
- Profiles Diagnostic 
- Page Page 
- 
- 
- 
- Core Services 
- MountOperation MountMonitor CredentialStore 
- DiscoveryEngine SystemdManager StyleManager 
- 
-
- pkexec polkit (privilege escalation) 
-
- mounter-helper (root process) 
- mount · umount · write-cred · write-unit 
-
+┌─────────────────────────────────────────────────────────┐
+│                     mounter (GUI)                       │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌───────────┐  │
+│  │ Dashboard│ │ Discover │ │  Mount   │ │  Mounted  │  │
+│  │   Page   │ │   Page   │ │   Page   │ │   Page    │  │
+│  └──────────┘ └──────────┘ └──────────┘ └───────────┘  │
+│  ┌──────────┐ ┌──────────┐                             │
+│  │ Profiles │ │Diagnostic│                             │
+│  │   Page   │ │   Page   │                             │
+│  └──────────┘ └──────────┘                             │
+│                         │                              │
+│  ┌──────────────────────┼──────────────────────────┐   │
+│  │     Core Services    │                          │   │
+│  │  MountOperation  MountMonitor  CredentialStore  │   │
+│  │  DiscoveryEngine  SystemdManager  StyleManager  │   │
+│  └──────────────────────┼──────────────────────────┘   │
+├──────────────────────────┼──────────────────────────────┤
+│            pkexec / polkit (privilege escalation)       │
+├──────────────────────────┼──────────────────────────────┤
+│              mounter-helper (root process)              │
+│     mount  ·  umount  ·  write-cred  ·  write-unit      │
+└─────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -168,4 +168,4 @@ dpkg-buildpackage -us -uc -b
 
 ---
 
-<p align="center"><sub> 2026 cpntodd -- GPL-3.0-or-later</sub></p>
+<p align="center"><sub>&copy; 2026 cpntodd -- GPL-3.0-or-later</sub></p>

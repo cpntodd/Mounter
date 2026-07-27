@@ -273,23 +273,23 @@ mounter</code></pre>
 
 <section id="architecture">
  <h2>Architecture</h2>
- <pre><code>
- mounter (GUI) 
- Dashboard · Discover · Mount · ... 
- 
- Core: MountOp · Monitor · CredStore 
-
- pkexec / polkit 
-
- mounter-helper (root) 
- mount · umount · creds · systemd 
-</code></pre>
+ <pre><code>┌─────────────────────────────────────────┐
+│           mounter (GUI)                 │
+│  Dashboard · Discover · Mount · ...     │
+│  ─────────────────────────────────      │
+│  Core: MountOp · Monitor · CredStore    │
+├─────────────────────────────────────────┤
+│        pkexec / polkit                  │
+├─────────────────────────────────────────┤
+│     mounter-helper (root)               │
+│  mount · umount · creds · systemd       │
+└─────────────────────────────────────────┘</code></pre>
 </section>
 
 </div>
 
 <footer>
- <p> 2026 <a href="https://github.com/cpntodd" style="color: var(--accent);">cpntodd</a> -- GPL-3.0-or-later</p>
+ <p>&copy; 2026 <a href="https://github.com/cpntodd" style="color: var(--accent);">cpntodd</a> -- GPL-3.0-or-later</p>
 </footer>
 
 </body>
