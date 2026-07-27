@@ -133,29 +133,35 @@ dpkg-buildpackage -us -uc -b
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                     mounter (GUI)                       │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌───────────┐  │
-│  │ Dashboard│ │ Discover │ │  Mount   │ │  Mounted  │  │
-│  │   Page   │ │   Page   │ │   Page   │ │   Page    │  │
-│  └──────────┘ └──────────┘ └──────────┘ └───────────┘  │
-│  ┌──────────┐ ┌──────────┐                             │
-│  │ Profiles │ │Diagnostic│                             │
-│  │   Page   │ │   Page   │                             │
-│  └──────────┘ └──────────┘                             │
-│                         │                              │
-│  ┌──────────────────────┼──────────────────────────┐   │
-│  │     Core Services    │                          │   │
-│  │  MountOperation  MountMonitor  CredentialStore  │   │
-│  │  DiscoveryEngine  SystemdManager  StyleManager  │   │
-│  └──────────────────────┼──────────────────────────┘   │
-├──────────────────────────┼──────────────────────────────┤
-│            pkexec / polkit (privilege escalation)       │
-├──────────────────────────┼──────────────────────────────┤
-│              mounter-helper (root process)              │
-│     mount  ·  umount  ·  write-cred  ·  write-unit      │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph GUI["mounter (GUI)"]
+        direction LR
+        Dashboard["Dashboard<br/>Page"]
+        Discover["Discover<br/>Page"]
+        Mount["Mount<br/>Page"]
+        Mounted["Mounted<br/>Page"]
+        Profiles["Profiles<br/>Page"]
+        Diagnostic["Diagnostic<br/>Page"]
+    end
+    subgraph Core["Core Services"]
+        direction LR
+        MountOp["MountOperation"]
+        MountMon["MountMonitor"]
+        CredStore["CredentialStore"]
+        DiscEngine["DiscoveryEngine"]
+        SystemdMgr["SystemdManager"]
+        StyleMgr["StyleManager"]
+    end
+    GUI --> Core
+    Core -->|"pkexec / polkit"| Helper["mounter-helper<br/>(root process)"]
+    subgraph Helper
+        direction LR
+        H1["mount"]
+        H2["umount"]
+        H3["write-cred"]
+        H4["write-unit"]
+    end
 ```
 
 ---

@@ -302,22 +302,31 @@ mounter</code></pre>
 graph TB
     subgraph GUI["mounter (GUI)"]
         direction LR
-        G1["Dashboard"]
-        G2["Discover"]
-        G3["Mount"]
-        G4["..."]
+        Dashboard["Dashboard<br/>Page"]
+        Discover["Discover<br/>Page"]
+        Mount["Mount<br/>Page"]
+        Mounted["Mounted<br/>Page"]
+        Profiles["Profiles<br/>Page"]
+        Diagnostic["Diagnostic<br/>Page"]
     end
-    GUI -->|"pkexec / polkit"| Helper
-    subgraph Helper["mounter-helper (root)"]
+    subgraph Core["Core Services"]
+        direction LR
+        MountOp["MountOperation"]
+        MountMon["MountMonitor"]
+        CredStore["CredentialStore"]
+        DiscEngine["DiscoveryEngine"]
+        SystemdMgr["SystemdManager"]
+        StyleMgr["StyleManager"]
+    end
+    GUI --> Core
+    Core -->|"pkexec / polkit"| Helper["mounter-helper<br/>(root process)"]
+    subgraph Helper
         direction LR
         H1["mount"]
         H2["umount"]
-        H3["creds"]
-        H4["systemd"]
+        H3["write-cred"]
+        H4["write-unit"]
     end
-    Core["Core: MountOp · Monitor · CredStore"]
-    GUI -.-> Core
-    Core -.-> Helper
  </pre>
  </div>
 </section>
