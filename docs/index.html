@@ -114,6 +114,24 @@
  word-break: break-word;
  overflow-wrap: break-word;
  }
+ .mermaid-container {
+ background: var(--code-bg);
+ border: 1px solid var(--border);
+ border-radius: 4px;
+ padding: 1rem 1rem 0.5rem 1rem;
+ margin: 0.75rem 0;
+ text-align: center;
+ }
+ .mermaid-container pre.mermaid {
+ background: none;
+ border: none;
+ padding: 0;
+ margin: 0;
+ white-space: normal;
+ word-break: normal;
+ overflow-wrap: normal;
+ overflow-x: visible;
+ }
  .install-block {
  background: var(--surface);
  border: 2px solid var(--accent);
@@ -279,17 +297,29 @@ mounter</code></pre>
 
 <section id="architecture">
  <h2>Architecture</h2>
- <pre><code>┌─────────────────────────────────────────┐
-│           mounter (GUI)                 │
-│  Dashboard · Discover · Mount · ...     │
-│  ─────────────────────────────────      │
-│  Core: MountOp · Monitor · CredStore    │
-├─────────────────────────────────────────┤
-│        pkexec / polkit                  │
-├─────────────────────────────────────────┤
-│     mounter-helper (root)               │
-│  mount · umount · creds · systemd       │
-└─────────────────────────────────────────┘</code></pre>
+ <div class="mermaid-container">
+ <pre class="mermaid">
+graph TB
+    subgraph GUI["mounter (GUI)"]
+        direction LR
+        G1["Dashboard"]
+        G2["Discover"]
+        G3["Mount"]
+        G4["..."]
+    end
+    GUI -->|"pkexec / polkit"| Helper
+    subgraph Helper["mounter-helper (root)"]
+        direction LR
+        H1["mount"]
+        H2["umount"]
+        H3["creds"]
+        H4["systemd"]
+    end
+    Core["Core: MountOp · Monitor · CredStore"]
+    GUI -.-> Core
+    Core -.-> Helper
+ </pre>
+ </div>
 </section>
 
 </div>
@@ -298,5 +328,24 @@ mounter</code></pre>
  <p>&copy; 2026 <a href="https://github.com/cpntodd" style="color: var(--accent);">cpntodd</a> -- GPL-3.0-or-later</p>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>
+ mermaid.initialize({ startOnLoad: true, theme: 'dark', themeVariables: {
+  primaryColor: '#f09040',
+  primaryTextColor: '#ffffff',
+  primaryBorderColor: '#f09040',
+  lineColor: '#f5a623',
+  secondaryColor: '#252526',
+  tertiaryColor: '#1e1e1e',
+  background: '#1e1e1e',
+  mainBkg: '#252526',
+  nodeBorder: '#f09040',
+  clusterBkg: '#252526',
+  clusterBorder: '#f09040',
+  titleColor: '#f09040',
+  edgeLabelBackground: '#252526',
+  nodeTextColor: '#d4d4d4'
+ }});
+</script>
 </body>
 </html>
