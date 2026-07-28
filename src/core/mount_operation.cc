@@ -8,6 +8,7 @@
 #include <nlohmann/json.hpp>
 
 #include <sstream>
+#include <string>
 #include <filesystem>
 
 #ifndef HELPER_PATH
@@ -98,6 +99,8 @@ std::string MountOperation::build_mount_json(const MountParams& params)
   j["persistent"]   = params.persistent ? "true" : "false";
   j["boot_mount"]   = params.boot_mount ? "true" : "false";
   j["auto_mount"]   = params.auto_mount ? "true" : "false";
+  j["uid"]          = std::to_string(getuid());
+  j["gid"]          = std::to_string(getgid());
   return j.dump();
 }
 

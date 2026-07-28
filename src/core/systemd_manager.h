@@ -14,6 +14,8 @@ struct SystemdMountConfig {
   std::string credentials_file;
   std::string smb_version = "3.1.1";
   std::string extra_options;
+  uid_t       uid = 0;
+  gid_t       gid = 0;
 };
 
 using SystemdCallback = std::function<void(bool success, const std::string& error)>;

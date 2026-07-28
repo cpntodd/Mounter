@@ -138,6 +138,11 @@ int cmd_mount_full(const std::string& json)
   auto persistent = json_get_string(json, "persistent");
   auto boot_mount  = json_get_string(json, "boot_mount");
   auto auto_mount  = json_get_string(json, "auto_mount");
+  auto uid_str    = json_get_string(json, "uid");
+  auto gid_str    = json_get_string(json, "gid");
+
+  uid_t mount_uid = uid_str.empty() ? getuid() : static_cast<uid_t>(std::stoul(uid_str));
+  gid_t mount_gid = gid_str.empty() ? getgid() : static_cast<gid_t>(std::stoul(gid_str));
 
   if (server.empty() || share.empty() || mountpoint.empty()) {
     std::cout << R"JSON({"success":false,"error":"Missing required fields (server, share, mount_point)"})JSON" << std::endl;
@@ -163,7 +168,10 @@ int cmd_mount_full(const std::string& json)
   if (!domain.empty())   cmd << ",domain=" << domain;
   if (!options.empty())  cmd << "," << options;
 
-  cmd << ",uid=" << getuid() << ",gid=" << getgid();
+  // Use the real user's uid/gid (passed from the GUI via JSON),
+  // and ensure read/write with explicit permission modes.
+  cmd << ",uid=" << mount_uid << ",gid=" << mount_gid
+      << ",file_mode=0644,dir_mode=0755,rw";
 
   auto result = run_command_capture(cmd.str());
   if (result.exit_code != 0) {
@@ -214,7 +222,9 @@ int cmd_mount_full(const std::string& json)
                  << "Where=" << mountpoint << "\n"
                  << "Type=cifs\n"
                  << "Options=_netdev,credentials=" << cred_path
-                 << ",vers=" << version;
+                 << ",vers=" << version
+                 << ",uid=" << mount_uid << ",gid=" << mount_gid
+                 << ",file_mode=0644,dir_mode=0755,rw";
       if (!options.empty()) mount_unit << "," << options;
       mount_unit << "\nTimeoutSec=30\n\n"
                  << "[Install]\n"
@@ -261,6 +271,8 @@ int cmd_mount(const std::string& json)
   auto domain     = json_get_string(json, "domain");
   auto version    = json_get_string(json, "smb_version");
   auto options    = json_get_string(json, "extra_options");
+  auto uid_str    = json_get_string(json, "uid");
+  auto gid_str    = json_get_string(json, "gid");
 
   if (server.empty() || share.empty() || mountpoint.empty()) {
     std::cout << R"JSON({"success":false,"error":"Missing required fields (server, share, mount_point)"})JSON" << std::endl;
@@ -269,6 +281,9 @@ int cmd_mount(const std::string& json)
 
   // Defaults
   if (version.empty()) version = "3.1.1";
+
+  uid_t mount_uid = uid_str.empty() ? getuid() : static_cast<uid_t>(std::stoul(uid_str));
+  gid_t mount_gid = gid_str.empty() ? getgid() : static_cast<gid_t>(std::stoul(gid_str));
 
   // Ensure mount point exists
   if (!ensure_directory(mountpoint)) {
@@ -295,8 +310,10 @@ int cmd_mount(const std::string& json)
     cmd << "," << options;
   }
 
-  // Default to current user's uid/gid for local access
-  cmd << ",uid=" << getuid() << ",gid=" << getgid();
+  // Use the real user's uid/gid (passed from the GUI via JSON),
+  // and ensure read/write with explicit permission modes.
+  cmd << ",uid=" << mount_uid << ",gid=" << mount_gid
+      << ",file_mode=0644,dir_mode=0755,rw";
 
   auto result = run_command_capture(cmd.str());
   if (result.exit_code == 0) {

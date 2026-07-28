@@ -148,7 +148,9 @@ std::string SystemdManager::generate_mount_unit(const SystemdMountConfig& config
        << "Where=" << config.mount_point << "\n"
        << "Type=cifs\n"
        << "Options=credentials=" << config.credentials_file
-       << ",vers=" << config.smb_version;
+       << ",vers=" << config.smb_version
+       << ",uid=" << config.uid << ",gid=" << config.gid
+       << ",file_mode=0644,dir_mode=0755,rw";
   if (!config.extra_options.empty()) {
     unit << "," << config.extra_options;
   }
