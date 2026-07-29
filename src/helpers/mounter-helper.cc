@@ -169,9 +169,11 @@ int cmd_mount_full(const std::string& json)
   if (!options.empty())  cmd << "," << options;
 
   // Use the real user's uid/gid (passed from the GUI via JSON),
-  // and ensure read/write with explicit permission modes.
+  // ensure read/write with explicit permission modes,
+  // iocharset=utf8 for proper Unicode filename handling,
+  // noperm to prevent CIFS client-side permission interference.
   cmd << ",uid=" << mount_uid << ",gid=" << mount_gid
-      << ",file_mode=0644,dir_mode=0755,rw";
+      << ",file_mode=0644,dir_mode=0755,rw,iocharset=utf8,noperm";
 
   auto result = run_command_capture(cmd.str());
   if (result.exit_code != 0) {
@@ -224,7 +226,7 @@ int cmd_mount_full(const std::string& json)
                  << "Options=_netdev,credentials=" << cred_path
                  << ",vers=" << version
                  << ",uid=" << mount_uid << ",gid=" << mount_gid
-                 << ",file_mode=0644,dir_mode=0755,rw";
+                 << ",file_mode=0644,dir_mode=0755,rw,iocharset=utf8,noperm";
       if (!options.empty()) mount_unit << "," << options;
       mount_unit << "\nTimeoutSec=30\n\n"
                  << "[Install]\n"
@@ -311,9 +313,11 @@ int cmd_mount(const std::string& json)
   }
 
   // Use the real user's uid/gid (passed from the GUI via JSON),
-  // and ensure read/write with explicit permission modes.
+  // ensure read/write with explicit permission modes,
+  // iocharset=utf8 for proper Unicode filename handling,
+  // noperm to prevent CIFS client-side permission interference.
   cmd << ",uid=" << mount_uid << ",gid=" << mount_gid
-      << ",file_mode=0644,dir_mode=0755,rw";
+      << ",file_mode=0644,dir_mode=0755,rw,iocharset=utf8,noperm";
 
   auto result = run_command_capture(cmd.str());
   if (result.exit_code == 0) {
@@ -337,6 +341,24 @@ int cmd_mount(const std::string& json)
   }
 }
 
+// ── Escape mount-point path to systemd unit name ──────────────
+// Matches SystemdManager::escape_path() in the GUI.
+static std::string escape_systemd_path(const std::string& path)
+{
+  std::string result;
+  for (char c : path) {
+    if (c == '/') {
+      if (!result.empty()) result += '-';
+    } else if (c == '-') {
+      result += "\\x2d";
+    } else {
+      result += c;
+    }
+  }
+  if (!result.empty() && result[0] == '-') result.erase(0, 1);
+  return result;
+}
+
 int cmd_umount(const std::string& json)
 {
   auto mountpoint = json_get_string(json, "mount_point");
@@ -356,6 +378,22 @@ int cmd_umount(const std::string& json)
   }
 
   if (result.exit_code == 0) {
+    // Clean up any systemd mount/automount units so the share
+    // does not remount on next boot.
+    auto escaped = escape_systemd_path(mountpoint);
+    std::string mount_unit    = "/etc/systemd/system/" + escaped + ".mount";
+    std::string automount_unit = "/etc/systemd/system/" + escaped + ".automount";
+
+    // Disable and stop units if they exist
+    run_command_capture("systemctl disable --now " + escaped + ".mount 2>/dev/null");
+    run_command_capture("systemctl disable --now " + escaped + ".automount 2>/dev/null");
+
+    // Remove unit files from disk
+    unlink(mount_unit.c_str());
+    unlink(automount_unit.c_str());
+
+    run_command_capture("systemctl daemon-reload");
+
     std::cout << R"JSON({"success":true})JSON" << std::endl;
     return 0;
   } else {

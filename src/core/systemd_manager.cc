@@ -150,7 +150,7 @@ std::string SystemdManager::generate_mount_unit(const SystemdMountConfig& config
        << "Options=credentials=" << config.credentials_file
        << ",vers=" << config.smb_version
        << ",uid=" << config.uid << ",gid=" << config.gid
-       << ",file_mode=0644,dir_mode=0755,rw";
+       << ",file_mode=0644,dir_mode=0755,rw,iocharset=utf8,noperm";
   if (!config.extra_options.empty()) {
     unit << "," << config.extra_options;
   }
